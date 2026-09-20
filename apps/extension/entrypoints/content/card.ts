@@ -21,7 +21,7 @@ import {
   tooShortHtml,
 } from "./card-view"
 import { wordDiffHtml } from "./diff"
-import { runRect } from "./extract"
+import { firstLineRect } from "./extract"
 import { clearHighlights, highlightReasons } from "./highlight"
 import { streamRewrite } from "./rewrite"
 import type { Block } from "./scheduler"
@@ -101,7 +101,7 @@ export class Card {
     const { score, text } = block
     if (!score || !text || !block.el.isConnected) return
     const rect = () =>
-      (block.nodes && runRect(block.nodes)) ?? block.el.getBoundingClientRect()
+      firstLineRect(block.nodes ?? block.el) ?? block.el.getBoundingClientRect()
     this.show(
       { rect, el: block.el, reading: { text, score, block } },
       anchor,
@@ -162,13 +162,15 @@ export class Card {
     const height = this.body.offsetHeight
     const m = VIEWPORT_MARGIN_PX
     const pointer = this.anchor ?? { x: target.left, y: target.top }
+    // Beside the mark it belongs to: under the line first, then over it.
+    const beside = clamp(target.left - CARD_GAP_PX - width, m, innerWidth)
     const y = clamp(pointer.y + BESIDE_OFFSET_Y_PX, m, innerHeight - height - m)
-    const x = clamp(pointer.x - width / 2, m, innerWidth - width - m)
+    const x = clamp(target.left - CARD_GAP_PX, m, innerWidth - width - m)
     const spots = [
-      { left: target.left - CARD_GAP_PX - width, top: y },
-      { left: target.right + CARD_GAP_PX, top: y },
-      { left: x, top: target.top - CARD_GAP_PX - height },
       { left: x, top: target.bottom + CARD_GAP_PX },
+      { left: x, top: target.top - CARD_GAP_PX - height },
+      { left: beside, top: y },
+      { left: target.right + CARD_GAP_PX, top: y },
     ]
     const fits = ({ left, top }: { left: number; top: number }) =>
       left >= m &&

@@ -1,13 +1,13 @@
 import type { Card } from "./card"
 import { runRect } from "./extract"
-import { MARKED_SELECTOR } from "./marks"
+import { LAMP_REACH_PX, MARKED_SELECTOR } from "./marks"
 import type { Block } from "./scheduler"
 
 const HOVER_DELAY_MS = 120
 const HIDE_DELAY_MS = 300
-const GUTTER_HIT_OUTSIDE_PX = 10
+const GUTTER_HIT_OUTSIDE_PX = LAMP_REACH_PX + 8
 const GUTTER_HIT_INSIDE_PX = 3
-const PROBE_OFFSET_PX = 10
+const PROBE_OFFSET_PX = LAMP_REACH_PX + 6
 
 export class CardTriggers {
   private hoverTimer = 0

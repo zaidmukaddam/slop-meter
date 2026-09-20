@@ -9,6 +9,8 @@ export const MARKED_SELECTOR = "[data-slop]"
 const MIN_OPACITY = 0.3
 const LAMP_PX = 7
 const LAMP_GAP_PX = 7
+/** How far left of the text a lamp reaches, so the card's hit zone can cover it. */
+export const LAMP_REACH_PX = LAMP_PX + LAMP_GAP_PX
 
 export function createPageStyle(): HTMLStyleElement {
   const style = document.createElement("style")

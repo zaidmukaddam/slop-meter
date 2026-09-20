@@ -97,7 +97,7 @@ export async function hoverGutter(page: Page, id: string): Promise<void> {
   const box = await page.locator(`#${id}`).boundingBox()
   if (!box) throw new Error(`#${id} is not rendered`)
   await page.mouse.move(box.x + 200, box.y + 10)
-  await page.mouse.move(box.x - 5, box.y + 12, { steps: 4 })
+  await page.mouse.move(box.x - 10, box.y + 12, { steps: 4 })
   await cardLocator(page).waitFor({
     state: "visible",
     timeout: CARD_TIMEOUT_MS,
