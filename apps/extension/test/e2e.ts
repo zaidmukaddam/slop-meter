@@ -19,6 +19,7 @@ import {
 } from "./browser.ts"
 import {
   BREAKS_PARAGRAPHS,
+  FEED_POSTS,
   HUMAN,
   LONG_PAGE_PARAGRAPHS,
   MACHINE,
@@ -26,6 +27,7 @@ import {
   SCORED_BLOCKS,
   TEST_PAGE,
   THREAD_COMMENTS,
+  THREAD_REPLIES,
 } from "./fixtures.ts"
 import {
   type ApiLog,
@@ -83,6 +85,8 @@ await checkRewrite(page)
 await checkSelection(page, worker)
 await checkThread(context)
 await checkLineBreaks(context)
+await checkFeed(context)
+await checkComments(context)
 await checkSitePolicy(context, page, worker)
 await context.close()
 await checkJank()
@@ -423,6 +427,51 @@ async function checkLineBreaks(context: BrowserContext) {
   })
   check(aligned.beside, "each lamp sits in the margin beside its own run")
   check(aligned.ordered, "lamps follow the runs down the page")
+  await page.close()
+}
+
+async function checkFeed(context: BrowserContext) {
+  const page = await context.newPage()
+  await page.goto(`${PAGES}/feed`)
+  const marked = await page
+    .waitForFunction(
+      (n) =>
+        document.querySelectorAll('[data-testid="tweetText"][data-slop]')
+          .length === n,
+      FEED_POSTS.length,
+      { timeout: 10_000 }
+    )
+    .then(
+      () => true,
+      () => false
+    )
+  check(marked, "a feed of posts marks each post's text, and not the short one")
+  check(
+    (await page.locator("nav [data-slop]").count()) === 0,
+    "the feed's navigation is left alone"
+  )
+  await page.close()
+}
+
+async function checkComments(context: BrowserContext) {
+  const page = await context.newPage()
+  await page.goto(`${PAGES}/comments`)
+  const marked = await page
+    .waitForFunction(
+      (n) =>
+        document.querySelectorAll("shreddit-comment [data-slop]").length === n,
+      THREAD_REPLIES.length,
+      { timeout: 10_000 }
+    )
+    .then(
+      () => true,
+      () => false
+    )
+  check(marked, "every comment in a thread of custom elements gets a mark")
+  check(
+    (await page.locator("shreddit-post [data-slop]").count()) === 1,
+    "the post's own body is marked too"
+  )
   await page.close()
 }
 

@@ -16,3 +16,4 @@ apps/*/components/ui/
 *.yaml
 *.yml
 .claude/
+chrome-mv3-dist

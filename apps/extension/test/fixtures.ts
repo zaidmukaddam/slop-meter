@@ -107,6 +107,56 @@ export const BREAKS_PAGE = `<!doctype html>
   </body>
 </html>`
 
+/** A post of a feed, shaped like x.com: the text is a div of spans inside nested flex wrappers. */
+const POST = (text: string) => `
+  <div data-testid="cellInnerDiv">
+    <div><div>
+      <article role="article" data-testid="tweet" style="display:flex">
+        <div style="display:flex"><div style="display:flex">
+          <div data-testid="tweetText" lang="en" dir="auto" style="white-space:pre-wrap"><span>${text}</span></div>
+        </div></div>
+      </article>
+    </div></div>
+  </div>`
+
+export const FEED_POSTS = [MACHINE[0], HUMAN[0], MACHINE[1]]
+const SHORT_POST = "Shipped it. Finally."
+
+export const FEED_PAGE = `<!doctype html>
+<html>
+  <head><meta charset="utf-8" /><title>Feed</title></head>
+  <body>
+    <nav aria-label="Primary"><a href="/home">Home</a><a href="/explore">Explore</a></nav>
+    <main role="main">
+      <div aria-label="Timeline: Posts">
+        ${[...FEED_POSTS, SHORT_POST].map(POST).join("\n")}
+      </div>
+    </main>
+  </body>
+</html>`
+
+/**
+ * A comment thread shaped like reddit.com: each comment is a custom element
+ * holding the markdown body. Modeled on its markup, not captured from the live
+ * site, which blocks automated browsers.
+ */
+export const THREAD_REPLIES = [HUMAN[1], MACHINE[2], HUMAN[2]]
+
+export const COMMENTS_PAGE = `<!doctype html>
+<html>
+  <head><meta charset="utf-8" /><title>Comments</title></head>
+  <body>
+    <header>r/example</header>
+    <main id="main-content">
+      <shreddit-post><div slot="text-body"><div class="md"><p>${MACHINE[0]}</p></div></div></shreddit-post>
+      ${THREAD_REPLIES.map(
+        (text, i) =>
+          `<shreddit-comment thingid="t1_${i}" depth="${i}"><div slot="comment" class="md"><p>${text}</p></div></shreddit-comment>`
+      ).join("\n")}
+    </main>
+  </body>
+</html>`
+
 export const LONG_PAGE_PARAGRAPHS = 200
 const SAMPLES = [...MACHINE, ...HUMAN]
 const NOTE_MULTIPLIER = 7919

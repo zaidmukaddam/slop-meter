@@ -13,3 +13,5 @@ apps/site/public/model.bin
 apps/site/public/model-lm.bin
 apps/site/public/slop-meter-chrome.zip
 .vercel
+.DS_Store
+chrome-mv3-dist
