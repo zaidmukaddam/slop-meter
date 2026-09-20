@@ -7,6 +7,7 @@ import { ReadingBench } from "@/components/bench/reading-bench"
 import { PageIntro } from "@/components/page-intro"
 import { Section } from "@/components/section"
 import { buttonVariants } from "@/components/ui/button"
+import { MODEL_FACTS } from "@/lib/models"
 import { cn } from "@/lib/utils"
 
 const kilobytes = Math.round(manifest.bytes / 1024)
@@ -72,7 +73,7 @@ export default async function Home() {
             Add to Chrome
           </Link>
           <Link
-            href="/calibration"
+            href="/models"
             className={cn(
               buttonVariants({ variant: "outline" }),
               "h-10 rounded-full border-hairline bg-transparent px-5 text-sm"
@@ -82,7 +83,7 @@ export default async function Home() {
           </Link>
         </div>
       </PageIntro>
-      <ReadingBench />
+      <ReadingBench models={MODEL_FACTS} />
       <Section
         id="engine"
         label="Engine"

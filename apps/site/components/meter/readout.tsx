@@ -27,8 +27,11 @@ export function Readout({ score, loading, minWords, caption }: ReadoutProps) {
 
   return (
     <div aria-live="polite" className="min-w-0">
-      <p className="truncate font-mono text-[11px] text-graphite">{caption}</p>
+      <p data-fade className="truncate font-mono text-[11px] text-graphite">
+        {caption}
+      </p>
       <p
+        data-morph="number"
         className={cn(
           "mt-1.5 font-mono text-[2.5rem] leading-none font-light tracking-tight lg:mt-2 lg:text-[3.5rem]",
           !decided && "text-graphite/60"
@@ -40,7 +43,10 @@ export function Readout({ score, loading, minWords, caption }: ReadoutProps) {
           suffix={<span className="text-[0.45em]">%</span>}
         />
       </p>
-      <p className="legend mt-2 flex items-center gap-2 text-[13px] font-semibold">
+      <p
+        data-fade
+        className="legend mt-2 flex items-center gap-2 text-[13px] font-semibold"
+      >
         <span
           aria-hidden
           className="size-2 rounded-full"
@@ -49,7 +55,7 @@ export function Readout({ score, loading, minWords, caption }: ReadoutProps) {
         {LABEL[score.localDecision]}
       </p>
 
-      <div className="mt-4 hidden lg:block">
+      <div data-fade className="mt-4 hidden lg:block">
         <div
           aria-hidden
           className="flex h-1 overflow-hidden rounded-full bg-muted"
@@ -68,6 +74,57 @@ export function Readout({ score, loading, minWords, caption }: ReadoutProps) {
           {decided
             ? `${percent(shownP(score.localP))} sure it's ${LABEL[score.localDecision]}, right about that often on held-out text.`
             : `Leans ${LABEL[score.top]}, ${percent(score.localP)} sure. It calls at ${percent(score.bar)}.`}
+        </p>
+      </div>
+    </div>
+  )
+}
+
+/** The same reading on one line, for the bar pinned to the top of the window. Not a
+ *  live region: the full readout already announces, and this one only repeats it. */
+export function ReadoutLine({
+  score,
+  caption,
+}: Pick<ReadoutProps, "score" | "caption">) {
+  if (!score) {
+    return (
+      <p className="font-mono text-[11px] text-graphite">Waiting for text</p>
+    )
+  }
+  const decided = score.localDecision !== "unsure"
+  const shown = Math.round(machineShare(score) * 100)
+
+  return (
+    <div className="flex min-w-0 items-center gap-x-5">
+      <p
+        data-morph-to="number"
+        className={cn(
+          "font-mono text-[2.5rem] leading-none font-light tracking-tight lg:text-[2.75rem]",
+          !decided && "text-graphite/60"
+        )}
+      >
+        <Numbers
+          value={shown}
+          label={`${shown}% machine-shaped`}
+          suffix={<span className="text-[0.45em]">%</span>}
+        />
+      </p>
+      <div data-fade-in className="min-w-0">
+        <p className="legend flex items-center gap-2 text-[13px] font-semibold">
+          <span
+            aria-hidden
+            className="size-2 rounded-full"
+            style={{ background: COLOR[score.localDecision] }}
+          />
+          {LABEL[score.localDecision]}
+        </p>
+        <p className="mt-1.5 font-mono text-[12px] whitespace-nowrap text-graphite">
+          {caption}
+        </p>
+        <p className="mt-1 font-mono text-[12px] whitespace-nowrap text-graphite tabular-nums max-sm:hidden">
+          {decided
+            ? `${percent(shownP(score.localP))} sure`
+            : `${percent(score.localP)} ${LABEL[score.top]} · calls at ${percent(score.bar)}`}
         </p>
       </div>
     </div>

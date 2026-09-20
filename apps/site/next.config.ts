@@ -9,6 +9,9 @@ if (existsSync(rootEnv)) process.loadEnvFile(rootEnv)
 
 const nextConfig: NextConfig = {
   reactCompiler: true,
+  async redirects() {
+    return [{ source: "/calibration", destination: "/models", permanent: true }]
+  },
   allowedDevOrigins: [
     "100.91.51.106",
     "zaids-macbook-pro.jaguar-gopher.ts.net",

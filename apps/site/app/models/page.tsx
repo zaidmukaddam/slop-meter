@@ -1,19 +1,25 @@
 import type { Metadata } from "next"
+import Link from "next/link"
 import { CalibrationRecord } from "@/components/calibration/calibration-record"
 import { CorpusTable } from "@/components/calibration/corpus-table"
 import { ReliabilityCharts } from "@/components/calibration/reliability-charts"
-import { SharperComparison } from "@/components/calibration/sharper-comparison"
 import { SourceAccuracy } from "@/components/calibration/source-accuracy"
 import { ThresholdExplorer } from "@/components/calibration/threshold-explorer"
+import { Compare } from "@/components/models/compare"
+import { Contents } from "@/components/models/contents"
 import { PageIntro } from "@/components/page-intro"
 import { Section } from "@/components/section"
 import { REPORT, latestSnapshot } from "@/lib/calibration"
 import { decimal, integer, percent } from "@/lib/format"
+import { LM_FEATURES, MODELS } from "@/lib/models"
 
+const [standard, sharper] = MODELS
+const quiet = standard.report.decision.shipped.unsureRate
+const quieter = sharper.report.decision.shipped.unsureRate
+const web = REPORT.decision.web
 const TEST_SOURCES = Object.keys(REPORT.model.bySource).filter((key) =>
   key.startsWith("test:")
 ).length
-const web = REPORT.decision.web
 const WEB_FIGURES = [
   { value: web.machine + web.mixed, label: "called machine-ish or mixed" },
   { value: web.human, label: "called human-ish" },
@@ -21,14 +27,14 @@ const WEB_FIGURES = [
 ]
 
 export const metadata: Metadata = {
-  title: "Calibration",
-  alternates: { canonical: "/calibration" },
-  description: `How often Slop Meter is right, measured on ${integer(REPORT.model.test.n)} held-out paragraphs and on web pages from sites it never trained on, including where it does worst.`,
+  title: "Models",
+  alternates: { canonical: "/models" },
+  description: `The two models that read your text, side by side, and how often each is right: measured on ${integer(REPORT.model.test.n)} held-out paragraphs and on web pages from sites they never trained on.`,
 }
 
 export const revalidate = 3600
 
-export default async function CalibrationPage() {
+export default async function ModelsPage() {
   const snapshot = await latestSnapshot()
   const test = REPORT.model.test
   const { tau, tauMachine } = REPORT.decision
@@ -36,16 +42,84 @@ export default async function CalibrationPage() {
 
   return (
     <>
-      <PageIntro label="Calibration" title="How often it's right">
+      <PageIntro label="Models" title="Two readers, one bar">
         <p>
-          Measured on {integer(test.n)} held-out paragraphs from {TEST_SOURCES}{" "}
-          sources, and on {integer(REPORT.decision.web.n)} paragraphs from web
-          pages on sites it never trained on. The numbers include the places it
-          does worst.
+          Both models answer the same four ways and both are held to the same
+          standard: right about 96 times in 100 when they speak. What separates
+          them is how much they read before answering, what that costs you, and
+          how often it lets them say something at all.
         </p>
       </PageIntro>
 
-      <CalibrationRecord />
+      <Contents />
+
+      <Section
+        id="pair"
+        label="The pair"
+        title="One measures the writing, one also asks a language model"
+        lead="The standard model looks at the text: how the sentences run, which words repeat, which of the 38 tells fire. Sharper reading keeps all of that and adds eight numbers from a small language model reading the same paragraph on your machine."
+      >
+        <div className="grid gap-x-16 gap-y-10 sm:grid-cols-2">
+          {MODELS.map((model) => (
+            <div key={model.id}>
+              <h3 className="text-xl font-semibold tracking-[-0.01em]">
+                {model.name}
+              </h3>
+              <p className="legend mt-2 text-[10px] font-semibold text-graphite">
+                {model.role}
+              </p>
+              <p className="mt-4 max-w-sm text-[15px]/relaxed text-pretty text-graphite">
+                {model.blurb}
+              </p>
+              <p className="mt-6 font-mono text-[13px] tabular-nums">
+                {percent(1 - model.report.decision.shipped.unsureRate, 1)} of
+                paragraphs get an answer
+              </p>
+            </div>
+          ))}
+        </div>
+      </Section>
+
+      <Section
+        id="compare"
+        label="Side by side"
+        title="Every number, both models"
+        lead="Measured on the same held-out paragraphs and the same web check, with the bars each model ships with. These move when the models are retrained."
+      >
+        <Compare />
+      </Section>
+
+      <Section
+        id="language-model"
+        label="Sharper reading"
+        title="What the language model adds"
+        lead={`SmolLM2-135M reads the paragraph one word at a time and, at each step, says what it would have written. Eight numbers come out of that, and a model trained with them makes the call. It is the difference between saying nothing on ${percent(quiet, 0)} of paragraphs and saying nothing on ${percent(quieter, 0)}.`}
+      >
+        <dl className="grid max-w-4xl gap-x-16 gap-y-8 sm:grid-cols-2">
+          {LM_FEATURES.map((feature) => (
+            <div key={feature.id}>
+              <dt className="flex items-baseline gap-3">
+                <span className="font-semibold">{feature.name}</span>
+                <code className="font-mono text-[11px] text-graphite">
+                  {feature.id}
+                </code>
+              </dt>
+              <dd className="mt-2 max-w-sm text-[15px]/relaxed text-pretty text-graphite">
+                {feature.what}
+              </dd>
+            </div>
+          ))}
+        </dl>
+      </Section>
+
+      <Section
+        id="record"
+        label="The record"
+        title="How often it's right"
+        lead={`Measured on ${integer(test.n)} held-out paragraphs from ${TEST_SOURCES} sources. The numbers include the places it does worst, and they are dated: every retrain writes a new report.`}
+      >
+        <CalibrationRecord />
+      </Section>
 
       <Section
         id="web"
@@ -68,15 +142,6 @@ export default async function CalibrationPage() {
             </div>
           ))}
         </dl>
-      </Section>
-
-      <Section
-        id="sharper"
-        label="Sharper reading"
-        title="What the language model adds"
-        lead="Sharper reading is off until you turn it on. Then a small language model, SmolLM2-135M, also reads each paragraph on your device, and a model trained with its numbers makes the call. It's measured on the same held-out test and web check, with bars set the same way."
-      >
-        <SharperComparison />
       </Section>
 
       <Section
@@ -132,7 +197,7 @@ export default async function CalibrationPage() {
       <Section
         id="data"
         label="Data"
-        title="What it learned from"
+        title="What they learned from"
         lead="Labels come from where each paragraph came from, not from annotators. Paragraphs from one source document all land in the same split, so the test never sees a version of something from training."
       >
         <div className="grid items-start gap-x-16 gap-y-10 lg:grid-cols-[minmax(0,1fr)_22rem]">
@@ -143,7 +208,7 @@ export default async function CalibrationPage() {
                 Human
               </dt>
               <dd className="text-graphite">
-                RAID's human documents (abstracts, books, news, poetry), Reddit
+                RAID's human documents across all eight of its domains, Reddit
                 posts from 2006 to 2016, Yelp reviews and English Wikipedia.
               </dd>
             </div>
@@ -171,8 +236,9 @@ export default async function CalibrationPage() {
                 Held-out attacks
               </dt>
               <dd className="text-graphite">
-                RAID's paraphrased model text, and text from four models told to
-                avoid the tells. None of it was used in training.
+                Text from four models told to avoid the tells, and the
+                paraphrased model text whose source documents are reserved for
+                the test.
               </dd>
             </div>
           </dl>
@@ -219,6 +285,38 @@ export default async function CalibrationPage() {
           </table>
         </Section>
       )}
+
+      <Section
+        id="choosing"
+        label="Choosing"
+        title="Which one to run"
+        lead="Standard is the default because it is free: it is already on the page, it reads a long article in the time it takes to scroll past the first paragraph, and it almost never calls a person a machine."
+      >
+        <div className="max-w-xl space-y-4 text-[15px]/relaxed text-pretty text-graphite">
+          <p>
+            Turn on sharper reading when you are looking hard at one piece of
+            writing and the standard model keeps saying it can't tell. It
+            answers on {percent(1 - quieter, 0)} of paragraphs instead of{" "}
+            {percent(1 - quiet, 0)}, and it is right just as often when it does.
+          </p>
+          <p>
+            The price is real: about 120 MB downloaded once, around 800 MB of
+            memory while it runs, and a browser with WebGPU and 16-bit floats.
+            It also speaks up more on ordinary human web pages, calling{" "}
+            {percent(sharper.report.decision.web.human, 0)} of them human-ish
+            where the standard model calls{" "}
+            {percent(standard.report.decision.web.human, 0)}.
+          </p>
+          <p>
+            The{" "}
+            <Link href="/rules" className="underline">
+              rulebook
+            </Link>{" "}
+            has the 38 tells they both measure, with an example and a fix for
+            each.
+          </p>
+        </div>
+      </Section>
     </>
   )
 }

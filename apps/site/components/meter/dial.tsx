@@ -2,6 +2,7 @@
 
 import { motion, useReducedMotion, useSpring, useTransform } from "motion/react"
 import { useEffect } from "react"
+import { cn } from "@/lib/utils"
 
 const W = 400
 const H = 236
@@ -39,9 +40,25 @@ interface DialProps {
   value: number | null
   label: string
   className?: string
+  /** Header size. Type is set in viewBox units, so 12 units in a 400-wide box renders
+   *  under 6px at header width. The pinned dial doubles its numerals to stay readable
+   *  and drops the caption strip, which the readout beside it already says. */
+  compact?: boolean
 }
 
-export function Dial({ value, label, className }: DialProps) {
+const CAPTION_H = 44
+
+/** A numeral on the baseline row: the same face and size as the ones on the arc, and
+ *  free of the wide tracking its neighbouring word is set in. */
+const END_STOP = {
+  fontSize: 24,
+  fontWeight: 500,
+  fill: "var(--ink)",
+  letterSpacing: 0,
+  className: "font-mono",
+} as const
+
+export function Dial({ value, label, className, compact }: DialProps) {
   const reduceMotion = useReducedMotion()
   const angle = useSpring(REST, { stiffness: 140, damping: 15, mass: 1.1 })
   const baseX = useTransform(angle, (a) => polar(a, NEEDLE_BASE).x)
@@ -57,18 +74,24 @@ export function Dial({ value, label, className }: DialProps) {
 
   return (
     <svg
-      viewBox={`0 0 ${W} ${H}`}
+      viewBox={`0 0 ${W} ${compact ? H - CAPTION_H : H}`}
       role="img"
       aria-label={label}
       className={className}
     >
       <defs>
-        <clipPath id="dial-window">
-          <rect x="0" y="0" width={W} height={H} rx="14" />
+        <clipPath id={compact ? "dial-window-compact" : "dial-window"}>
+          <rect
+            x="0"
+            y="0"
+            width={W}
+            height={compact ? H - CAPTION_H : H}
+            rx="14"
+          />
         </clipPath>
       </defs>
 
-      <g clipPath="url(#dial-window)">
+      <g clipPath={`url(#${compact ? "dial-window-compact" : "dial-window"})`}>
         <rect width={W} height={H} fill="var(--face)" />
 
         <path
@@ -118,43 +141,63 @@ export function Dial({ value, label, className }: DialProps) {
           )
         })}
 
-        {LABELS.map((n) => {
-          const p = polar(angleFor(n / 100), R + 28)
-          return (
-            <text
-              key={n}
-              x={p.x}
-              y={p.y}
-              textAnchor="middle"
-              dominantBaseline="middle"
-              fontSize="12"
-              fill="var(--ink)"
-              className="font-mono"
-            >
-              {n}
-            </text>
-          )
-        })}
+        {/* At header width there is no room beside the ends of the arc: a 0 or a 100 set
+            there lands on the scale. So the three inner stops stay on the arc and the two
+            ends move to the baseline, where each is named and numbered at once.
+            The type is its own group because, when the bench collapses, it leaves
+            before the gauge shrinks and comes back at the pinned size after. */}
+        <g {...(compact ? { "data-fade-in": "" } : { "data-fade": "" })}>
+          {LABELS.filter((n) => !compact || (n > 0 && n < 100)).map((n) => {
+            const p = polar(angleFor(n / 100), R + (compact ? 34 : 28))
+            return (
+              <text
+                key={n}
+                x={p.x}
+                y={p.y}
+                textAnchor="middle"
+                dominantBaseline="middle"
+                fontSize={compact ? 24 : 12}
+                fontWeight={compact ? 500 : undefined}
+                fill="var(--ink)"
+                className="font-mono"
+              >
+                {n}
+              </text>
+            )
+          })}
 
-        <text
-          x="36"
-          y="168"
-          fontSize="10"
-          fill="var(--human)"
-          className="legend font-sans font-semibold"
-        >
-          Human
-        </text>
-        <text
-          x={W - 36}
-          y="168"
-          textAnchor="end"
-          fontSize="10"
-          fill="var(--machine)"
-          className="legend font-sans font-semibold"
-        >
-          Machine
-        </text>
+          <text
+            x={compact ? 18 : 36}
+            y={compact ? 176 : 168}
+            fontSize={compact ? 19 : 10}
+            fill="var(--human)"
+            className={cn(
+              "legend font-sans",
+              compact ? "font-bold" : "font-semibold"
+            )}
+          >
+            {compact && <tspan {...END_STOP}>0</tspan>}
+            <tspan dx={compact ? 10 : 0}>Human</tspan>
+          </text>
+          <text
+            x={W - (compact ? 18 : 36)}
+            y={compact ? 176 : 168}
+            textAnchor="end"
+            fontSize={compact ? 19 : 10}
+            fill="var(--machine)"
+            className={cn(
+              "legend font-sans",
+              compact ? "font-bold" : "font-semibold"
+            )}
+          >
+            Machine
+            {compact && (
+              <tspan dx={10} {...END_STOP}>
+                100
+              </tspan>
+            )}
+          </text>
+        </g>
 
         <motion.line
           x1={baseX}
@@ -166,24 +209,34 @@ export function Dial({ value, label, className }: DialProps) {
           strokeLinecap="round"
         />
 
-        <rect x="0" y={H - 44} width={W} height="44" fill="var(--sheet)" />
-        <line x1="0" x2={W} y1={H - 44} y2={H - 44} stroke="var(--hairline)" />
-        <text
-          x={W / 2}
-          y={H - 19}
-          textAnchor="middle"
-          fontSize="10"
-          fill="var(--graphite)"
-          className="legend font-sans font-medium"
-        >
-          % machine-shaped
-        </text>
+        {!compact && (
+          <g data-fade>
+            <rect x="0" y={H - 44} width={W} height="44" fill="var(--sheet)" />
+            <line
+              x1="0"
+              x2={W}
+              y1={H - 44}
+              y2={H - 44}
+              stroke="var(--hairline)"
+            />
+            <text
+              x={W / 2}
+              y={H - 19}
+              textAnchor="middle"
+              fontSize="10"
+              fill="var(--graphite)"
+              className="legend font-sans font-medium"
+            >
+              % machine-shaped
+            </text>
+          </g>
+        )}
       </g>
       <rect
         x="0.5"
         y="0.5"
         width={W - 1}
-        height={H - 1}
+        height={(compact ? H - CAPTION_H : H) - 1}
         rx="14"
         fill="none"
         stroke="var(--hairline)"

@@ -1,13 +1,13 @@
 "use client"
 
 import { segment } from "@slop/features"
-import { explain } from "@slop/model"
+import { explain, isRead } from "@slop/model"
 import { tellSpans } from "@slop/rules/names"
 import { rise } from "cube-motion"
 import { parseAsStringLiteral, useQueryState } from "nuqs"
 import { useEffect, useLayoutEffect, useRef, useState } from "react"
 import { Dial } from "@/components/meter/dial"
-import { Readout } from "@/components/meter/readout"
+import { Readout, ReadoutLine } from "@/components/meter/readout"
 import { Button } from "@/components/ui/button"
 import { machineShare } from "@/lib/decisions"
 import { EXAMPLES, TEXT_IDS } from "@/lib/examples"
@@ -19,7 +19,7 @@ import { Distribution } from "./distribution"
 import { type Fingerprint, InputSelector } from "./input-selector"
 import { MarginNotes } from "./margin-notes"
 import { OwnTextEditor } from "./own-text-editor"
-import { ModelChoice } from "./model-choice"
+import { ModelChoice, type ModelFacts } from "./model-choice"
 import { SpecimenParagraph } from "./specimen-paragraph"
 import { Trace, type TracePoint } from "./trace"
 
@@ -31,7 +31,7 @@ type Geometry = { strip: number; height: number; rows: Record<number, Row> }
 const EXAMPLE_PARAGRAPHS = EXAMPLES.flatMap((e) => segment(e.text))
 const READING_LINE = 38
 
-export function ReadingBench() {
+export function ReadingBench({ models }: { models: ModelFacts }) {
   const { scorer, error } = useScorer()
   const sharper = useSharper()
   const [textId, setTextId] = useQueryState("text", textParam)
@@ -39,12 +39,14 @@ export function ReadingBench() {
   const [editing, setEditing] = useState(true)
   const [reading, setReading] = useState<number | null>(null)
   const [pointed, setPointed] = useState<number | null>(null)
+  const [pinned, setPinned] = useState(false)
   const [geometry, setGeometry] = useState<Geometry>({
     strip: 0,
     height: 0,
     rows: {},
   })
   const headRef = useRef<HTMLDivElement>(null)
+  const railRef = useRef<HTMLDivElement>(null)
   const paperRef = useRef<HTMLElement>(null)
   const editorRef = useRef<HTMLDivElement>(null)
   const stripRef = useRef<HTMLDivElement>(null)
@@ -57,7 +59,7 @@ export function ReadingBench() {
   const paragraphs = segment(example ? example.text : ownText)
   const scoreOf = (p: string) => scorer?.score(p, featuresFor(sharper, p))
   const scores = paragraphs.map(scoreOf)
-  const scored = scores.flatMap((s, i) => (s && !s.tooShort ? [i] : []))
+  const scored = scores.flatMap((s, i) => (s && isRead(s) ? [i] : []))
   const active = showEditor
     ? scored.at(-1)
     : [pointed, reading, scored[0]].find(
@@ -72,7 +74,7 @@ export function ReadingBench() {
       const text = EXAMPLES.find((e) => e.id === id)?.text ?? ownText
       fingerprints[id] = segment(text)
         .map((p) => scoreOf(p)!)
-        .filter((s) => !s.tooShort)
+        .filter(isRead)
         .map((s) => ({ words: s.words, decision: s.localDecision }))
     }
   }
@@ -82,6 +84,67 @@ export function ReadingBench() {
     const onShow = showEditor ? [] : segment(example ? example.text : ownText)
     request([...EXAMPLE_PARAGRAPHS, ...onShow])
   }, [sharper.status, showEditor, example, ownText])
+
+  // The number only exists once there is a reading, so that is when to measure again.
+  const hasReading = score !== undefined
+
+  // The collapse itself is CSS, driven by the scroll. This only says when it is over, to
+  // hand the tab order to the pinned face (and to show it, where scroll timelines are missing).
+  useEffect(() => {
+    const rail = railRef.current
+    if (!rail) return
+    const observer = new IntersectionObserver(([entry]) =>
+      setPinned(!entry.isIntersecting && entry.boundingClientRect.top < 0)
+    )
+    observer.observe(rail)
+    return () => observer.disconnect()
+  }, [])
+
+  // Where each travelling piece has to end up: the offset and scale from its place on the
+  // full face to its twin on the pinned face. Measured from layout boxes, which ignore
+  // transforms, so it is right even if this runs mid-collapse. Never runs on scroll.
+  useLayoutEffect(() => {
+    const head = headRef.current
+    if (!head) return
+    const place = (el: HTMLElement) => {
+      let x = 0
+      let y = 0
+      for (
+        let node: HTMLElement | null = el;
+        node && node !== head;
+        node = node.offsetParent as HTMLElement | null
+      ) {
+        x += node.offsetLeft
+        y += node.offsetTop
+      }
+      return { x, y }
+    }
+    const measure = () => {
+      for (const from of head.querySelectorAll<HTMLElement>("[data-morph]")) {
+        const to = head.querySelector<HTMLElement>(
+          `[data-morph-to="${from.dataset.morph}"]`
+        )
+        if (!to?.offsetParent) continue
+        const a = place(from)
+        const b = place(to)
+        // Text scales by its type size, since a paragraph is as wide as its column.
+        const s =
+          from.dataset.morph === "dial"
+            ? to.offsetWidth / from.offsetWidth
+            : parseFloat(getComputedStyle(to).fontSize) /
+              parseFloat(getComputedStyle(from).fontSize)
+        for (const el of [from, to]) {
+          el.style.setProperty("--dx", `${b.x - a.x}px`)
+          el.style.setProperty("--dy", `${b.y - a.y}px`)
+          el.style.setProperty("--s", String(s))
+        }
+      }
+    }
+    measure()
+    const observer = new ResizeObserver(measure)
+    observer.observe(head)
+    return () => observer.disconnect()
+  }, [hasReading])
 
   useEffect(() => {
     const line = READING_LINE
@@ -169,6 +232,7 @@ export function ReadingBench() {
 
   return (
     <div
+      className="bench relative"
       style={
         {
           "--reading-line": `${READING_LINE}dvh`,
@@ -177,32 +241,68 @@ export function ReadingBench() {
         } as React.CSSProperties
       }
     >
+      {/* As tall as the distance the header travels before it pins: the scroll
+          timeline for the collapse. See .bench-rail in globals.css. */}
+      <div
+        ref={railRef}
+        aria-hidden
+        className="bench-rail pointer-events-none absolute inset-x-0 top-0 h-39 max-lg:hidden"
+      />
+
+      {/* One box. On wide screens its top is negative, so 156 of its 260px scroll out
+          of the window and the last 104 stay: a collapse with no layout change. Narrow
+          screens keep the whole panel pinned, where it is already header-sized. */}
       <div
         ref={headRef}
-        className="sticky top-0 z-20 border-b border-hairline bg-bench"
+        className="sticky top-0 z-20 border-b border-hairline bg-bench lg:-top-39 lg:h-65"
       >
-        <div className="mx-auto grid w-full max-w-[1200px] grid-cols-[10rem_minmax(0,1fr)] items-center gap-x-5 px-5 py-3 sm:grid-cols-[13rem_minmax(0,1fr)] sm:px-8 lg:grid-cols-[minmax(0,1fr)_var(--dial-w)_minmax(0,1fr)] lg:gap-x-14 lg:py-5">
+        <div className="bench-full mx-auto grid w-full max-w-[1200px] grid-cols-[10rem_minmax(0,1fr)] items-center gap-x-5 px-5 py-3 sm:grid-cols-[13rem_minmax(0,1fr)] sm:px-8 lg:h-full lg:grid-cols-[minmax(0,1fr)_var(--dial-w)_minmax(0,1fr)] lg:gap-x-14 lg:py-5">
           <ModelChoice
-            legend={<PanelLegend className="mb-0">Model</PanelLegend>}
-            className="hidden lg:flex"
+            variant="panel"
+            facts={models}
+            legend={<PanelLegend>Model</PanelLegend>}
+            className="hidden lg:block"
           />
-          <Dial
-            value={score ? machineShare(score) : null}
-            label={
-              score
-                ? `Needle at ${Math.round(machineShare(score) * 100)} percent machine-shaped`
-                : "Needle at rest"
-            }
-            className="w-full"
-          />
+          <div data-morph="dial">
+            <Dial
+              value={score ? machineShare(score) : null}
+              label={
+                score
+                  ? `Needle at ${Math.round(machineShare(score) * 100)} percent machine-shaped`
+                  : "Needle at rest"
+              }
+              className="block w-full"
+            />
+          </div>
           <div>
-            <PanelLegend className="max-lg:hidden">Reading</PanelLegend>
+            <div data-fade>
+              <PanelLegend className="max-lg:hidden">Reading</PanelLegend>
+            </div>
             <Readout
               score={score}
               loading={!scorer}
               minWords={scorer?.manifest.minWords ?? 0}
               caption={caption}
             />
+          </div>
+        </div>
+
+        <div
+          inert={!pinned}
+          data-on={pinned || undefined}
+          className="bench-pinned absolute inset-x-0 bottom-0 h-26 max-lg:hidden"
+        >
+          <div className="mx-auto grid h-full w-full max-w-[1200px] grid-cols-[minmax(0,1fr)_11.5rem_minmax(0,1fr)] items-center gap-x-8 px-8 xl:gap-x-14">
+            <ModelChoice variant="bar" facts={models} legend={null} />
+            <div data-morph-to="dial">
+              <Dial
+                compact
+                value={score ? machineShare(score) : null}
+                label="The same needle, pinned"
+                className="block w-full"
+              />
+            </div>
+            <ReadoutLine score={score} caption={caption} />
           </div>
         </div>
       </div>

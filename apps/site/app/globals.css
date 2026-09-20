@@ -10,6 +10,177 @@
   --font-heading: var(--font-archivo);
 }
 
+/* The reading panel collapses into a header the way a large title does. It is one sticky
+   box with a negative top, so its upper part scrolls out of the window and its last
+   104px stay pinned: layout never changes and no script runs while you scroll.
+
+   Inside it are two faces. The gauge, the number and the model's name exist on both, and
+   each pair is kept exactly on top of each other for the whole journey: the full-size one
+   travels and shrinks toward the pinned one's place, the pinned one starts out stretched
+   over the full-size one and settles. So the faces can cross-fade while those three read
+   as single objects gliding into the header. Offsets come from one measurement on mount
+   and resize (--dx, --dy, --s on each element). The timeline is the rail, a box as tall as
+   the distance the header travels, and only transform and opacity are animated.
+
+   The order matters as much as the motion. The full face's small print clears out in the
+   first third, the three travellers cross an empty stage, each hands over to its twin at
+   the midpoint where the two coincide, and the pinned face's small print arrives in the
+   last third. At no point are two captions or two toggles on screen together.
+
+   Browsers without scroll timelines get the pinned face switched on once the rail is gone. */
+.bench-pinned {
+  background: var(--bench);
+  opacity: 0;
+  transition: opacity 150ms ease-out;
+}
+.bench-pinned[data-on] {
+  opacity: 1;
+}
+
+@keyframes bench-fade-out {
+  to {
+    opacity: 0;
+  }
+}
+@keyframes bench-fade-in {
+  from {
+    opacity: 0;
+  }
+}
+/* transform is given only at the ends, so it runs the full distance in a straight line
+   while opacity does its handover in the middle.
+
+   The handover is never a cross-fade. Two half-transparent copies of the same thing
+   composite to about three quarters of its brightness, so a cross-fade makes the piece
+   dim as it passes the midpoint. The incoming twin arrives at full strength on top of
+   the outgoing one, which is only then taken away underneath it. */
+@keyframes bench-morph-out {
+  0%,
+  50% {
+    opacity: 1;
+  }
+  50.5%,
+  100% {
+    opacity: 0;
+  }
+  100% {
+    transform: translate(var(--dx, 0px), var(--dy, 0px)) scale(var(--s, 1));
+  }
+}
+@keyframes bench-morph-in {
+  0% {
+    opacity: 0;
+    transform: translate(calc(var(--dx, 0px) * -1), calc(var(--dy, 0px) * -1))
+      scale(calc(1 / var(--s, 1)));
+  }
+  49.5% {
+    opacity: 0;
+  }
+  50%,
+  100% {
+    opacity: 1;
+  }
+  100% {
+    transform: none;
+  }
+}
+
+/* The full gauge card is 236 units tall and the pinned one 192: the difference is the
+   caption strip. The card is trimmed to the pinned height while that strip fades, so by
+   the dissolve the two cards are the same shape and no second edge shows through. */
+@keyframes bench-morph-out-soft {
+  0% {
+    opacity: 1;
+    clip-path: inset(0 0 0 0 round 10.5px);
+  }
+  35% {
+    opacity: 1;
+    clip-path: inset(0 0 18.64% 0 round 10.5px);
+  }
+  65% {
+    opacity: 1;
+  }
+  65.5% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 0;
+    clip-path: inset(0 0 18.64% 0 round 10.5px);
+    transform: translate(var(--dx, 0px), var(--dy, 0px)) scale(var(--s, 1));
+  }
+}
+@keyframes bench-morph-in-soft {
+  0% {
+    opacity: 0;
+    transform: translate(calc(var(--dx, 0px) * -1), calc(var(--dy, 0px) * -1))
+      scale(calc(1 / var(--s, 1)));
+  }
+  35% {
+    opacity: 0;
+  }
+  65%,
+  100% {
+    opacity: 1;
+  }
+  100% {
+    transform: none;
+  }
+}
+
+@media (min-width: 64rem) {
+  @supports (animation-timeline: view()) {
+    .bench {
+      timeline-scope: --bench-collapse;
+    }
+    .bench-rail {
+      view-timeline: --bench-collapse block;
+    }
+    .bench-pinned {
+      background: none;
+      opacity: 1;
+      transition: none;
+    }
+    .bench [data-fade],
+    .bench [data-fade-in],
+    .bench [data-morph],
+    .bench [data-morph-to] {
+      animation-timing-function: linear;
+      animation-fill-mode: both;
+      animation-timeline: --bench-collapse;
+    }
+    /* The small print scrolls at full speed while the travellers lag behind it, so it
+       would run into them: it has to be gone within the first 28px. Coming back, it waits
+       until the number is within a few percent of its final size. */
+    .bench [data-fade] {
+      animation-name: bench-fade-out;
+      animation-range: exit 0% exit 18%;
+    }
+    .bench [data-fade-in] {
+      animation-name: bench-fade-in;
+      animation-range: exit 78% exit 100%;
+    }
+    .bench [data-morph],
+    .bench [data-morph-to] {
+      transform-origin: 0 0;
+      animation-range: exit 0% exit 100%;
+    }
+    .bench [data-morph] {
+      animation-name: bench-morph-out;
+    }
+    .bench [data-morph-to] {
+      animation-name: bench-morph-in;
+    }
+    /* Text twins are the same glyphs, so they can swap in a blink. The two gauge cards
+       are not the same height, so theirs is a longer dissolve. */
+    .bench [data-morph="dial"] {
+      animation-name: bench-morph-out-soft;
+    }
+    .bench [data-morph-to="dial"] {
+      animation-name: bench-morph-in-soft;
+    }
+  }
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;

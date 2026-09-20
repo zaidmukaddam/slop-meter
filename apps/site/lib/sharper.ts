@@ -16,6 +16,9 @@ export type SharperState = {
   msPerParagraph: number | null
   error: LmError | null
   ready: number
+  /** Whether the language model is already in this browser's cache, so turning
+   *  sharper reading on costs a load rather than a download. */
+  held: boolean
 }
 
 const OFF: SharperState = {
@@ -24,6 +27,7 @@ const OFF: SharperState = {
   msPerParagraph: null,
   error: null,
   ready: 0,
+  held: false,
 }
 let state = OFF
 const listeners = new Set<() => void>()
@@ -86,8 +90,21 @@ function remember(on: boolean) {
 }
 
 export function resume(): void {
+  void held()
   try {
     if (localStorage.getItem(REMEMBER) === "on") void turnOn()
+  } catch {}
+}
+
+/** transformers.js keeps model files in a Cache Storage bucket of its own, so the
+ *  download happens once per browser. Asking it turns "42%" into a straight answer
+ *  about whether anything is coming over the network at all. */
+async function held(): Promise<void> {
+  try {
+    const cache = await caches.open("transformers-cache")
+    const keys = await cache.keys()
+    const name = lmManifest.lm.repo.split("/").pop() ?? ""
+    update({ held: keys.some((request) => request.url.includes(name)) })
   } catch {}
 }
 
@@ -106,6 +123,7 @@ export async function turnOn(): Promise<void> {
     if (connection !== lm) return
     scorer.useLm(lmManifest, weights)
     update({ status: "on", progress: 1 })
+    void held()
   } catch (error) {
     if (connection === lm) fail(error)
   }
