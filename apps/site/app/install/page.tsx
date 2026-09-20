@@ -71,7 +71,7 @@ export default async function InstallPage() {
     <>
       <PageIntro label="Install" title="Add Slop Meter to Chrome">
         <p>
-          It puts a thin mark beside each paragraph you read, colored by its
+          It puts a small lamp beside each paragraph you read, colored by its
           best guess, and opens a card with the odds when you hover one. To
           check anything else, select it and choose Score with Slop Meter from
           the right-click menu, or paste it into the toolbar popup. The model
@@ -161,7 +161,7 @@ export default async function InstallPage() {
         id="preview"
         label="On a page"
         title="What you'll see"
-        lead="A mark beside each paragraph, colored like the dial: blue for human-ish, orange for machine-ish, brass for mixed, gray for can't tell. The fainter the mark, the less sure it is. Hover or tab to a paragraph for the card."
+        lead="A lamp beside each paragraph, colored like the dial: blue for human-ish, orange for machine-ish, brass for mixed, gray for can't tell. The fainter the lamp, the less sure it is. Hover or tab to a paragraph for the card."
       >
         <PagePreview />
       </Section>

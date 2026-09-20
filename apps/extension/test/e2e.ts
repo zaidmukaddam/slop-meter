@@ -42,7 +42,6 @@ declare const chrome: typeof browser
 const PACKAGE_DIR = join(import.meta.dirname, "..")
 const EXTENSION_DIR = join(PACKAGE_DIR, ".output/chrome-mv3-e2e")
 const SCREENSHOTS = mkdtempSync(join(tmpdir(), "slop-e2e-"))
-const CONFIDENCE_LEVELS = 10
 const SETTLE_MS = 300
 const DEFAULT_OFF_WAIT_MS = 1500
 const SCORED_COUNT = Object.keys(SCORED_BLOCKS).length
@@ -99,11 +98,10 @@ async function expectedMarks(): Promise<Record<string, string>> {
   const scorer = await Scorer.create(manifestJson, weights, { backend: "cpu" })
 
   const marks: Record<string, string> = {}
-  const toLevel = (p: number) => Math.round(p * (CONFIDENCE_LEVELS - 1))
   for (const [id, text] of Object.entries(SCORED_BLOCKS)) {
     const score = scorer.score(text)
-    marks[id] = `${score.localDecision}/${toLevel(score.localP)}`
-    console.log(`  ${id} ${marks[id]}`)
+    marks[id] = score.localDecision
+    console.log(`  ${id} ${marks[id]} ${score.localP.toFixed(2)}`)
   }
   return marks
 }
@@ -136,10 +134,36 @@ async function checkMarks(page: Page, layoutWithout: string) {
     (await readLayout(page)) === layoutWithout,
     "no layout shift: every element rect identical with and without the extension"
   )
-  const shadow = await page.evaluate(
-    () => getComputedStyle(document.getElementById("m0")!).boxShadow
+  const lamp = await page.evaluate(() => {
+    const el = document.getElementById("m0")!
+    const box = el.getBoundingClientRect()
+    const lamps = [
+      ...document.querySelectorAll<HTMLElement>("slop-marks slop-mark"),
+    ]
+    const mine = lamps.find((l) => {
+      const top = parseFloat(l.style.top) - scrollY
+      return top > box.top - 8 && top < box.top + 32
+    })
+    return {
+      lamps: lamps.length,
+      marked: document.querySelectorAll("[data-slop]").length,
+      left: mine ? box.left - parseFloat(mine.style.left) + scrollX : null,
+      color: mine?.style.background ?? "",
+      opacity: mine ? parseFloat(mine.style.opacity) : 0,
+    }
+  })
+  check(
+    lamp.lamps === lamp.marked,
+    `one lamp per marked block (${lamp.lamps} of ${lamp.marked})`
   )
-  check(/(rgba?|oklch|color)\(/.test(shadow), `gutter bar drawn (${shadow})`)
+  check(
+    lamp.left !== null && lamp.left > 0 && lamp.left < 40,
+    `lamp sits in the margin beside the first line (${lamp.left}px left of the text)`
+  )
+  check(
+    /(rgba?|oklch|color|#)/.test(lamp.color) && lamp.opacity > 0.3,
+    `lamp carries the answer colour at reading confidence (${lamp.color} @ ${lamp.opacity})`
+  )
 }
 
 async function checkHoverCard(page: Page) {
@@ -386,23 +410,19 @@ async function checkLineBreaks(context: BrowserContext) {
   check(bars, "paragraphs split only by line breaks each get a mark")
 
   const aligned = await page.evaluate(() => {
-    const font = document.querySelector("font")!
-    const left = font.getBoundingClientRect().left + scrollX
-    const bars = [...document.querySelectorAll("slop-marks slop-mark")]
-    const tops = bars.map((b) => parseFloat((b as HTMLElement).style.top))
+    const left = document.querySelector("font")!.getBoundingClientRect().left
+    const lamps = [
+      ...document.querySelectorAll<HTMLElement>("slop-marks slop-mark"),
+    ]
+    const tops = lamps.map((l) => parseFloat(l.style.top))
+    const gaps = lamps.map((l) => left + scrollX - parseFloat(l.style.left))
     return {
-      beside: bars.every(
-        (b) => Math.abs(parseFloat((b as HTMLElement).style.left) - left) < 12
-      ),
-      ordered: tops.every((t, i) => i === 0 || t > tops[i - 1]),
-      tall: bars.every((b) => parseFloat((b as HTMLElement).style.height) > 10),
+      beside: gaps.every((gap) => gap > 0 && gap < 40),
+      ordered: tops.every((top, i) => i === 0 || top > tops[i - 1]),
     }
   })
-  check(aligned.beside, "each mark sits in the gutter beside its own text")
-  check(
-    aligned.ordered && aligned.tall,
-    "marks stack down the page, one per run"
-  )
+  check(aligned.beside, "each lamp sits in the margin beside its own run")
+  check(aligned.ordered, "lamps follow the runs down the page")
   await page.close()
 }
 

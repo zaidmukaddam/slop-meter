@@ -37,7 +37,7 @@ export function PagePreview() {
   return (
     <figure
       role="img"
-      aria-label="A web page with a thin colored mark beside each paragraph, and the card that opens when you hover a mark: its call, the odds, and the rules behind it."
+      aria-label="A web page with a small colored lamp beside each paragraph, and the card that opens when you hover one: its call, the odds, and the rules behind it."
       className="overflow-hidden rounded-lg border border-hairline bg-sheet"
     >
       <div
@@ -60,7 +60,7 @@ export function PagePreview() {
             return (
               <div key={i} className="relative mt-4 pl-5">
                 <span
-                  className="absolute inset-y-1 left-0 w-[3px] rounded-full"
+                  className="absolute top-[7px] left-0 size-[7px] rounded-full"
                   style={{
                     background: score
                       ? COLOR[score.localDecision]

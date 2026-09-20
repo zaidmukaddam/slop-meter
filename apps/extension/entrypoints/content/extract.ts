@@ -133,12 +133,32 @@ export function serializeRun(nodes: Node[]): SerializedBlock {
 }
 
 export function runRect(nodes: Node[]): DOMRect | null {
+  const rect = rangeOver(nodes)?.getBoundingClientRect()
+  return rect?.height ? rect : null
+}
+
+/** Where the text starts: the first line's box, which is where a lamp sits. */
+export function firstLineRect(target: Node[] | HTMLElement): DOMRect | null {
+  const range = Array.isArray(target) ? rangeOver(target) : rangeIn(target)
+  const line = range && [...range.getClientRects()].find((r) => r.height)
+  if (line) return line
+  if (Array.isArray(target)) return null
+  const box = target.getBoundingClientRect()
+  return box.height ? box : null
+}
+
+function rangeOver(nodes: Node[]): Range | null {
   if (!nodes.length) return null
   const range = document.createRange()
   range.setStartBefore(nodes[0])
   range.setEndAfter(nodes[nodes.length - 1])
-  const rect = range.getBoundingClientRect()
-  return rect.height ? rect : null
+  return range
+}
+
+function rangeIn(el: HTMLElement): Range | null {
+  const range = document.createRange()
+  range.selectNodeContents(el)
+  return range
 }
 
 function linkTextLength(el: Element): number {

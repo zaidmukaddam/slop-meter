@@ -52,10 +52,7 @@ export function readMarks(page: Page): Promise<Record<string, string>> {
   return page.evaluate(() => {
     const marked = document.querySelectorAll<HTMLElement>("[data-slop]")
     return Object.fromEntries(
-      [...marked].map((el) => [
-        el.id,
-        `${el.dataset.slop}/${el.dataset.slopConfidence}`,
-      ])
+      [...marked].map((el) => [el.id, el.dataset.slop ?? ""])
     )
   })
 }

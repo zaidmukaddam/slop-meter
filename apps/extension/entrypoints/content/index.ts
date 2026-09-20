@@ -6,7 +6,7 @@ import { SUMMARY_PORT, type Summary, handle } from "../../shared/messages"
 import { loadScorer, manifest, sharpen } from "../../shared/model"
 import { getSettings, isSiteOn, onSettingsChanged } from "../../shared/settings"
 import { Card } from "./card"
-import { RunMarks, createPageStyle, markBlock, unmarkBlock } from "./marks"
+import { Lamps, createPageStyle, markBlock, unmarkBlock } from "./marks"
 import { type Block, BlockScheduler } from "./scheduler"
 import { readSiteClass } from "./site"
 import { CardTriggers } from "./triggers"
@@ -29,10 +29,10 @@ export default defineContentScript({
       if (settings.lm) void sharpenBlocks(batch)
       pushSummary()
     })
-    const runMarks = new RunMarks()
+    const lamps = new Lamps()
     const card = new Card(readSiteClass(), () => settings)
     const triggers = new CardTriggers(card, (el, y) => scheduler.get(el, y))
-    const onResize = () => redrawRuns()
+    const onResize = () => redraw()
 
     async function getScorer(): Promise<Scorer> {
       loading ??= loadScorer()
@@ -46,7 +46,7 @@ export default defineContentScript({
       if (!running) return
       document.documentElement.append(pageStyle)
       card.mount()
-      runMarks.mount()
+      lamps.mount()
       triggers.attach()
       addEventListener("resize", onResize, { passive: true })
       scheduler.start(loaded)
@@ -58,7 +58,7 @@ export default defineContentScript({
       removeEventListener("resize", onResize)
       triggers.detach()
       card.unmount()
-      runMarks.unmount()
+      lamps.unmount()
       for (const block of scheduler.all()) unmarkBlock(block.el)
       scheduler.stop()
       pageStyle.remove()
@@ -82,15 +82,14 @@ export default defineContentScript({
     }
 
     function render(block: Block) {
-      if (block.nodes) return runMarks.draw(block)
+      lamps.draw(block)
+      if (block.nodes) return
       if (!block.score || block.score.tooShort) unmarkBlock(block.el)
       else markBlock(block.el, block.score)
     }
 
-    function redrawRuns() {
-      for (const block of scheduler.all()) {
-        if (block.nodes) runMarks.draw(block)
-      }
+    function redraw() {
+      for (const block of scheduler.all()) lamps.draw(block)
     }
 
     function summarize(): Summary {
