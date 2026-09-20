@@ -99,7 +99,7 @@ export const GROUPS: Group[] = [
       },
       {
         name: "Extra download",
-        values: ["none", "about 120 MB, once"],
+        values: ["none", "about 125 MB, once"],
         note: "SmolLM2-135M in 4-bit, from Hugging Face, cached by the browser after the first run.",
       },
       {

@@ -1,3 +1,4 @@
+import { RULES } from "@slop/rules"
 import type { Metadata } from "next"
 import Link from "next/link"
 import { CalibrationRecord } from "@/components/calibration/calibration-record"
@@ -46,8 +47,7 @@ export default async function ModelsPage() {
         <p>
           Both models answer the same four ways and both are held to the same
           standard: right about 96 times in 100 when they speak. What separates
-          them is how much they read before answering, what that costs you, and
-          how often it lets them say something at all.
+          them is how much they read before answering, and what that costs you.
         </p>
       </PageIntro>
 
@@ -57,7 +57,7 @@ export default async function ModelsPage() {
         id="pair"
         label="The pair"
         title="One measures the writing, one also asks a language model"
-        lead="The standard model looks at the text: how the sentences run, which words repeat, which of the 38 tells fire. Sharper reading keeps all of that and adds eight numbers from a small language model reading the same paragraph on your machine."
+        lead={`The standard model looks at the text: how the sentences run, and which of the ${RULES.length} tells fire. Sharper reading keeps all of that and adds eight numbers from a small language model reading the same paragraph on your machine.`}
       >
         <div className="grid gap-x-16 gap-y-10 sm:grid-cols-2">
           {MODELS.map((model) => (
@@ -300,9 +300,9 @@ export default async function ModelsPage() {
             {percent(1 - quiet, 0)}, and it is right just as often when it does.
           </p>
           <p>
-            The price is real: about 120 MB downloaded once, around 800 MB of
-            memory while it runs, and a browser with WebGPU and 16-bit floats.
-            It also speaks up more on ordinary human web pages, calling{" "}
+            It costs about 125 MB downloaded once, around 800 MB of memory while
+            it runs, and a browser with WebGPU and 16-bit floats. It also speaks
+            up more on ordinary human web pages, calling{" "}
             {percent(sharper.report.decision.web.human, 0)} of them human-ish
             where the standard model calls{" "}
             {percent(standard.report.decision.web.human, 0)}.
@@ -312,8 +312,8 @@ export default async function ModelsPage() {
             <Link href="/rules" className="underline">
               rulebook
             </Link>{" "}
-            has the 38 tells they both measure, with an example and a fix for
-            each.
+            has the {RULES.length} tells they both measure, with an example and
+            a fix for each.
           </p>
         </div>
       </Section>

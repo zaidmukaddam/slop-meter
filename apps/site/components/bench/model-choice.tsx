@@ -30,7 +30,7 @@ const fetching = (s: SharperState) =>
 function badge(s: SharperState): string | null {
   if (s.unfit) return "computer only"
   if (s.status === "on") return null
-  if (s.status !== "loading") return s.held ? "held" : DOWNLOAD
+  if (s.status !== "loading") return s.held ? "saved" : DOWNLOAD
   return fetching(s) ? `${Math.round(s.progress * 100)}%` : "starting"
 }
 

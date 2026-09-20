@@ -13,5 +13,5 @@ The first release: a Chrome extension and slop-meter.com, both reading on your d
 - The extension marks each paragraph and opens a card with the rules behind a mark. Select any text and choose Score with Slop Meter, or paste text into the popup. It works from the keyboard, shows the page's spread in its popup, has per-site switches, and stays off on mail, documents and banking.
 - The site reads documents too. Drop a PDF, Word file, slide deck, spreadsheet or ebook onto the text box and it is converted to text in the tab, by WebAssembly, and scored like anything you paste.
 - Rewrite and shared corrections are both opt-in. Rewrite sends the paragraph's text, and corrections send numbers only.
-- The models page puts the two side by side and shows every number above, with sample sizes. The reading panel collapses into a pinned header as you scroll, so the gauge stays with you down a long text.
+- The models page puts the two side by side and shows every number above, with sample sizes. On the home page the reading panel shrinks into a header that stays at the top while you scroll a long text.
 - A blog, starting with the launch post, and this changelog as a page of its own.

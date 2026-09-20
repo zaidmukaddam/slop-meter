@@ -6,8 +6,7 @@ import { POSTS, longDate } from "@/lib/posts"
 export const metadata: Metadata = {
   title: "Blog",
   alternates: { canonical: "/blog" },
-  description:
-    "Notes on Slop Meter: what it does, how it decides, and what changes between releases.",
+  description: "Notes on Slop Meter: what it does and what it gets wrong.",
 }
 
 export default function BlogPage() {
@@ -15,8 +14,8 @@ export default function BlogPage() {
     <>
       <PageIntro label="Blog" title="Notes">
         <p>
-          What the meter does, how it decides, and what it gets wrong. Release
-          by release detail is in the{" "}
+          What the meter does and what it gets wrong. Release by release detail
+          is in the{" "}
           <Link href="/changelog" className="text-ink underline">
             changelog
           </Link>

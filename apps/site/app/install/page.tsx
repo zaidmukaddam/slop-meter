@@ -78,6 +78,15 @@ export default async function InstallPage() {
           runs inside the extension, so nothing you read is sent anywhere to be
           scored.
         </p>
+        {/* Shown where the pointer is a finger: nothing below can be done there. */}
+        <p className="mt-4 hidden text-ink pointer-coarse:block">
+          The extension runs in Chrome on a computer. On a phone or tablet, use
+          the{" "}
+          <Link href="/#bench" className="underline">
+            home page
+          </Link>
+          : paste text or open a document and it's read the same way.
+        </p>
         <div className="mt-6 flex flex-wrap items-center gap-x-4 gap-y-3">
           {STORE_URL ? (
             <a
