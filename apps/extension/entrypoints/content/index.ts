@@ -1,5 +1,5 @@
 import { segment } from "@slop/features"
-import type { Scorer } from "@slop/model"
+import { type Scorer, isRead } from "@slop/model"
 import { type Browser, browser } from "wxt/browser"
 import { defineContentScript } from "wxt/utils/define-content-script"
 import { SUMMARY_PORT, type Summary, handle } from "../../shared/messages"
@@ -67,7 +67,7 @@ export default defineContentScript({
 
     async function sharpenBlocks(blocks: Block[]) {
       const todo = blocks.filter(
-        (b) => b.text && b.score && !b.score.tooShort && !b.score.lm
+        (b) => b.text && b.score && isRead(b.score) && !b.score.lm
       )
       if (!todo.length) return
       const texts = todo.map((b) => b.text!)
@@ -84,7 +84,7 @@ export default defineContentScript({
     function render(block: Block) {
       lamps.draw(block)
       if (block.nodes) return
-      if (!block.score || block.score.tooShort) unmarkBlock(block.el)
+      if (!block.score || !isRead(block.score)) unmarkBlock(block.el)
       else markBlock(block.el, block.score)
     }
 
@@ -96,7 +96,7 @@ export default defineContentScript({
       if (!running || !scorer) return { host, on: false }
       const counts = { human: 0, machine: 0, mixed: 0, unsure: 0 }
       for (const { score } of scheduler.all()) {
-        if (score && !score.tooShort) counts[score.localDecision]++
+        if (score && isRead(score)) counts[score.localDecision]++
       }
       return { host, on: true, backend: scorer.backend, counts }
     }

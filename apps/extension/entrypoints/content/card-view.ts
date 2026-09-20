@@ -7,6 +7,7 @@ import {
   type Reason,
   type Score,
   cardNote,
+  isRead,
   percent,
   reasonCode,
   shownP,
@@ -47,12 +48,16 @@ export function selectionHtml(paragraphs: string[], scores: Score[]): string {
     const snippet =
       words.slice(0, SNIPPET_WORDS).join(" ") +
       (words.length > SNIPPET_WORDS ? "…" : "")
-    const odds = score.tooShort ? "too short" : percent(shownP(score.localP))
+    const odds = score.tooShort
+      ? "too short"
+      : score.notEnglish
+        ? "not English"
+        : percent(shownP(score.localP))
     return `
       <li>
         <i class="dot" style="${swatch(score.localDecision)}"></i>
         <span>${escapeHtml(snippet)}</span>
-        <code>${score.tooShort ? odds : `${DECISION_LABEL[score.localDecision]} ${odds}`}</code>
+        <code>${isRead(score) ? `${DECISION_LABEL[score.localDecision]} ${odds}` : odds}</code>
       </li>`
   })
   return `
@@ -62,6 +67,12 @@ export function selectionHtml(paragraphs: string[], scores: Score[]): string {
     </div>
     <ul class="paragraphs">${rows.join("")}</ul>
     <p class="muted">Each paragraph gets its own call. Select one to see why.</p>`
+}
+
+export function notEnglishHtml(): string {
+  return `
+    <div class="head"><span class="label">Selection</span>${close}</div>
+    <p class="note">Every rule here was written for English, so this text isn't read.</p>`
 }
 
 export function tooShortHtml(minWords: number): string {

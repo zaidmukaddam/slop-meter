@@ -1,6 +1,11 @@
 "use client"
 
-import { DECISION_LABEL as LABEL, RULE_FIRED, type Score } from "@slop/model"
+import {
+  DECISION_LABEL as LABEL,
+  RULE_FIRED,
+  type Score,
+  isRead,
+} from "@slop/model"
 import { tellSpans } from "@slop/rules/names"
 import { useEffect, useRef } from "react"
 import { percent } from "@/lib/format"
@@ -29,7 +34,7 @@ export function SpecimenParagraph({
   onPoint,
 }: SpecimenParagraphProps) {
   const textRef = useRef<HTMLParagraphElement>(null)
-  const scorable = !!score && !score.tooShort
+  const scorable = !!score && isRead(score)
   const tells = scorable
     ? score.rules.filter((rule) => rule.value > RULE_FIRED).flatMap(tellSpans)
     : []

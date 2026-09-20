@@ -84,7 +84,9 @@ export function ScoreText({ lm }: { lm: boolean }) {
               <span className="shrink-0 font-mono tabular-nums">
                 {s.tooShort
                   ? "too short"
-                  : `${DECISION_LABEL[s.localDecision]} ${percent(shownP(s.localP))}`}
+                  : s.notEnglish
+                    ? "not English"
+                    : `${DECISION_LABEL[s.localDecision]} ${percent(shownP(s.localP))}`}
               </span>
             </li>
           ))}

@@ -1,4 +1,4 @@
-import { DECISION_LABEL, type Score, shownP } from "@slop/model"
+import { DECISION_LABEL, type Score, isRead, shownP } from "@slop/model"
 import { ANSWER_HEX, MARKER_HEX } from "@slop/theme/palette"
 import { firstLineRect } from "./extract"
 import { HIGHLIGHT_NAME } from "./highlight"
@@ -50,7 +50,7 @@ export class Lamps {
   draw(block: Block): void {
     const line = firstLineRect(block.nodes ?? block.el)
     const score = block.score
-    if (!line || !score || score.tooShort) return this.erase(block)
+    if (!line || !score || !isRead(score)) return this.erase(block)
 
     let lamp = this.lamps.get(block)
     if (!lamp) {

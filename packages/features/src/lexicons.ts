@@ -475,3 +475,12 @@ export const NOT_ADVERBS = new Set([
   "hilly",
   "chilly",
 ])
+
+/** The commonest English function words. Their share of a text says whether it is English at all. */
+export const ENGLISH_FUNCTION_WORDS = new Set(
+  (
+    "the of and to in is it that was for on are as with his her they be this " +
+    "from or had by but what were we when your there their which been these " +
+    "who will would about into them than then its our you he she have has not"
+  ).split(" ")
+)

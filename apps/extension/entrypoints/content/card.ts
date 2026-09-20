@@ -4,6 +4,7 @@ import {
   type Score,
   type SiteClass,
   explain,
+  isRead,
 } from "@slop/model"
 import { type StoredCorrection, send } from "../../shared/messages"
 import { manifest } from "../../shared/model"
@@ -15,6 +16,7 @@ import {
   cardHtml,
   isLabel,
   labelPickerHtml,
+  notEnglishHtml,
   rewriteFooterHtml,
   savedNoteHtml,
   selectionHtml,
@@ -115,7 +117,7 @@ export class Card {
     const el =
       container instanceof Element ? container : container.parentElement
     if (!el) return
-    const single = scores.length === 1 && !scores[0].tooShort
+    const single = scores.length === 1 && isRead(scores[0])
     this.show(
       {
         rect: () => range.getBoundingClientRect(),
@@ -126,9 +128,11 @@ export class Card {
       true,
       single
         ? undefined
-        : scores.every((s) => s.tooShort)
-          ? tooShortHtml(manifest.minWords)
-          : selectionHtml(paragraphs, scores)
+        : scores.every((s) => s.notEnglish)
+          ? notEnglishHtml()
+          : scores.every((s) => s.tooShort)
+            ? tooShortHtml(manifest.minWords)
+            : selectionHtml(paragraphs, scores)
     )
   }
 

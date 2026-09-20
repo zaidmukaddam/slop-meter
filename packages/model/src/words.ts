@@ -13,6 +13,9 @@ export const DECISION_LABEL: Record<Decision, string> = {
 
 export const RULE_FIRED = 0.05
 
+/** A paragraph the model will speak about: long enough, and in the language it learned. */
+export const isRead = (score: Score) => !score.tooShort && !score.notEnglish
+
 export const shownP = (p: number) => Math.min(p, 0.99)
 
 export const percent = (p: number, digits = 0) =>

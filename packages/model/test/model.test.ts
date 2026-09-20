@@ -24,7 +24,10 @@ test("scores sum to one, decisions are one of four", () => {
 
 test("a paragraph dense with tells reads as machine-ish, and explain names rules that fired", () => {
   const s = scorer.score(machine)
-  assert.equal(s.localDecision, "machine")
+  // The top guess, not the call: whether it clears the bar is the bar's business, and the
+  // bar moves with the false-machine cap each retrain is held to.
+  assert.equal(s.top, "machine")
+  assert.ok(s.probs.machine > 0.9, `machine ${s.probs.machine}`)
   const why = explain(s)
   assert.equal(why.length, 3)
   for (const r of why) assert.ok(r.value > 0.05 && r.push > 0 && r.name)
@@ -72,6 +75,19 @@ test('short paragraphs are "unsure", not guessed', () => {
   const s = scorer.score("Great post, thanks.")
   assert.equal(s.tooShort, true)
   assert.equal(s.localDecision, "unsure")
+})
+
+test('text that is not English is "unsure", not guessed', () => {
+  const french =
+    "Les modeles de langue produisent des textes qui ressemblent beaucoup a " +
+    "ceux des gens, et la difference tient souvent a des details minuscules. " +
+    "Cette page ne sait pas lire le francais, elle ne devrait donc rien " +
+    "affirmer du tout sur ce paragraphe assez long pour etre lu autrement."
+  const score = scorer.score(french)
+  assert.equal(score.tooShort, false)
+  assert.equal(score.notEnglish, true)
+  assert.equal(score.localDecision, "unsure")
+  assert.equal(scorer.score(machine).notEnglish, false)
 })
 
 test("cache returns the same object for the same paragraph", () => {

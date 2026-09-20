@@ -3,6 +3,7 @@ import {
   DECISION_LABEL as LABEL,
   type Decision,
   type Score,
+  isRead,
 } from "@slop/model"
 import { COLOR } from "@/lib/decisions"
 import { percent } from "@/lib/format"
@@ -14,7 +15,7 @@ interface DistributionProps {
 }
 
 export function Distribution({ scores, className }: DistributionProps) {
-  const scored = scores.filter((s): s is Score => !!s && !s.tooShort)
+  const scored = scores.filter((s): s is Score => !!s && isRead(s))
   const share = (d: Decision) =>
     scored.filter((s) => s.localDecision === d).length / scored.length
   const present = scored.length

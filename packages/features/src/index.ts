@@ -1,10 +1,16 @@
+import { ENGLISH_FUNCTION_WORDS } from "./lexicons.ts"
 import { RULE_EXTRACTORS } from "./rules.ts"
 import { STYLE_NAMES, style } from "./style.ts"
-import { type Span, parse } from "./text.ts"
+import { type Span, type Word, parse } from "./text.ts"
 
 export type { Span } from "./text.ts"
 export type RuleHit = { id: string; value: number; spans: Span[] }
-export type Features = { values: Float32Array; rules: RuleHit[]; words: number }
+export type Features = {
+  values: Float32Array
+  rules: RuleHit[]
+  words: number
+  english: boolean
+}
 
 export const SPEC_VERSION = 5
 export const RULE_FEATURE_IDS = Object.keys(RULE_EXTRACTORS).sort()
@@ -23,7 +29,23 @@ export function extract(text: string): Features {
     0
   )
   values.set(style(parsed), rules.length)
-  return { values, rules, words: parsed.words.length }
+  return {
+    values,
+    rules,
+    words: parsed.words.length,
+    english: englishShare(parsed.words) >= ENGLISH_MIN_SHARE,
+  }
+}
+
+/** Every rule and every weight was learned on English. This is the guard that says so. */
+export const ENGLISH_MIN_SHARE = 0.1
+
+export function englishShare(text: string | Word[]): number {
+  const words = typeof text === "string" ? parse(text).words : text
+  if (!words.length) return 0
+  let hits = 0
+  for (const word of words) if (ENGLISH_FUNCTION_WORDS.has(word.lower)) hits++
+  return hits / words.length
 }
 
 export function segment(text: string): string[] {

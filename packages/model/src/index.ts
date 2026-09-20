@@ -34,6 +34,7 @@ export {
   DIAL_ORDER,
   RULE_FIRED,
   cardNote,
+  isRead,
   percent,
   reasonCode,
   shownP,
@@ -52,6 +53,7 @@ export type Score = {
   localDecision: Decision
   localP: number
   tooShort: boolean
+  notEnglish: boolean
   model: Model
 }
 export type Reason = {
@@ -224,6 +226,7 @@ function remember(
   const top = CLASSES.reduce((a, b) => (probs[b] > probs[a] ? b : a))
   const bar = top === "machine" ? tauMachine : tau
   const tooShort = features.words < minWords
+  const notEnglish = !features.english
 
   const score: Score = {
     words: features.words,
@@ -233,9 +236,11 @@ function remember(
     probs,
     top,
     bar,
-    localDecision: !tooShort && probs[top] >= bar ? top : "unsure",
+    localDecision:
+      !tooShort && !notEnglish && probs[top] >= bar ? top : "unsure",
     localP: probs[top],
     tooShort,
+    notEnglish,
     model,
   }
   if (cache.size > CACHE_LIMIT) cache.clear()
