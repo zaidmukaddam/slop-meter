@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@base-ui/react": "^1.8.0",
+    "@firecrawl/anydoc-wasm": "^0.2.4",
     "@neondatabase/serverless": "^1.1.0",
     "@phosphor-icons/react": "^2.1.10",
     "@sfinterface/numbers": "^0.3.4",

@@ -11,5 +11,6 @@ The first release: a Chrome extension and slop-meter.com, both reading on your d
 - The rulebook has 38 tells, each with an example and the fix. The model measures 36 of them.
 - Human text polished by a model is the hard case: its top guess is human 43% of the time, machine-ish 34% and mixed 24%.
 - The extension marks each paragraph and opens a card with the rules behind a mark. Select any text and choose Score with Slop Meter, or paste text into the popup. It works from the keyboard, shows the page's spread in its popup, has per-site switches, and stays off on mail, documents and banking.
+- The site reads documents too. Drop a PDF, Word file, slide deck, spreadsheet or ebook onto the text box and it is converted to text in the tab, by WebAssembly, and scored like anything you paste.
 - Rewrite and shared corrections are both opt-in. Rewrite sends the paragraph's text, and corrections send numbers only.
 - The calibration page shows every number above, with sample sizes.

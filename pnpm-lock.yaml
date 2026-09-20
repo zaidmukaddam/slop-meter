@@ -108,6 +108,9 @@ importers:
       '@base-ui/react':
         specifier: ^1.8.0
         version: 1.8.0(@types/react@19.3.0)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
+      '@firecrawl/anydoc-wasm':
+        specifier: ^0.2.4
+        version: 0.2.4
       '@neondatabase/serverless':
         specifier: ^1.1.0
         version: 1.1.0
@@ -492,6 +495,9 @@ packages:
 
   '@emnapi/runtime@1.11.3':
     resolution: {integrity: sha512-Xz4Tpyki7XyrpbUK1jR1AhdAdaXyhhY4lZ3neLodmhpuWfy2PAQN5B46sAiU4liOXGLkHypn/qU+jvfWSCYYLA==}
+
+  '@firecrawl/anydoc-wasm@0.2.4':
+    resolution: {integrity: sha512-ZqrTXBrwi1Ct4kB5R72KQC9fOxwq4W08bZh6T+o84Mork3xCKLpH8TRe+KM3vJ+XqRVlV1dxHvQp0cnkO2r5TQ==}
 
   '@floating-ui/core@1.8.0':
     resolution: {integrity: sha512-0CIZ5itps/8x7BG8dEIhs53BvCUH2PCoogtakwRTut+Arm58sJooJ0AuZhLw2HJYIR5cMLNPBSS728sPho2khQ==}
@@ -3434,6 +3440,8 @@ snapshots:
     dependencies:
       tslib: 2.8.1
     optional: true
+
+  '@firecrawl/anydoc-wasm@0.2.4': {}
 
   '@floating-ui/core@1.8.0':
     dependencies:
