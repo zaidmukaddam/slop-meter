@@ -72,7 +72,7 @@ node ../eval/compare-models.ts <old-weights-dir> ../packages/model/weights   # n
 - Labels come from provenance, not annotators. "Mixed" means model-polished or spliced text; human edits of model text are not in the corpus.
 - It says can't tell on most paragraphs: 9 in 10 held out, 98 in 100 on the web check. Sharper reading brings held out to about 3 in 4.
 - Weakest on model-polished human text, whose top guess is human 48% of the time.
-- Paraphrasing defeats it. Both models catch fewer than 1 in 10 paraphrased machine paragraphs, and the bar is why: training on paraphrases raises the catch rate but calls three times as many human web paragraphs machine-ish, so the bar stays where it is and the attack gets through.
+- Paraphrasing defeats it. Both models catch fewer than 1 in 10 paraphrased machine paragraphs. Training on three times as many paraphrases raises the catch rate, but it also calls nearly three times as many human web paragraphs machine-ish. The models ship with the smaller dose, and the attack mostly gets through.
 - Institutional policy statements lean machine-ish. Across 2,788 Federal Register paragraphs, 13.8% lean machine and 0.3% are called machine-ish, so formal prose on its own is fine. The Federal Reserve statement on the site leans machine on 2 of its 3 paragraphs.
 - Text from current models mostly gets can't tell. Short posts and replies lean machine; long essays lean either way.
 - Documents are read as text, not as pages. A scanned PDF holds pictures of words, so it is refused rather than guessed at; tables, code blocks and images are dropped before scoring; the cap is 20 MB, and the converter is about 6 MB, fetched the first time you open a file.
