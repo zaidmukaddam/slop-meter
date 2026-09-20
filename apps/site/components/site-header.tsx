@@ -23,16 +23,18 @@ export function SiteHeader() {
         <Link href="/" aria-label="Slop Meter, home">
           <Wordmark />
         </Link>
-        <ul className="ml-auto flex items-center gap-6 text-sm">
+        <ul className="ml-auto flex items-center gap-1 text-sm sm:gap-6">
           {LINKS.map(({ href, label }) => {
             const current = pathname.startsWith(href)
             return (
-              <li key={href} className="max-sm:hidden">
+              <li key={href}>
+                {/* On a phone these three are the whole navigation, so each gets a
+                    finger-sized target; the pill beside them can't be used there. */}
                 <Link
                   href={href}
                   aria-current={current ? "page" : undefined}
                   className={cn(
-                    "text-graphite transition-colors hover:text-ink active:text-ink",
+                    "flex h-11 items-center px-2.5 text-graphite transition-colors hover:text-ink active:text-ink sm:h-auto sm:px-0",
                     current && "text-ink"
                   )}
                 >
@@ -41,7 +43,7 @@ export function SiteHeader() {
               </li>
             )
           })}
-          <li>
+          <li className="max-sm:hidden">
             <Link
               href="/install"
               className={cn(

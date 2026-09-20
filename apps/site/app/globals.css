@@ -189,11 +189,22 @@
   html {
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    /* The grey flash on tap is the loudest "this is a website" tell. Controls here
+       have their own pressed states. */
+    -webkit-tap-highlight-color: transparent;
+    /* No font inflation when a phone turns sideways. */
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
   }
 
   body {
     @apply bg-bench font-sans text-ink;
     overflow-wrap: break-word;
+    /* With viewport-fit=cover the page runs under the notch in landscape and the home
+       indicator at the bottom. Rules and backgrounds still bleed; content steps in. */
+    padding-left: env(safe-area-inset-left, 0px);
+    padding-right: env(safe-area-inset-right, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
   }
 
   a {

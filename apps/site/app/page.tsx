@@ -66,12 +66,26 @@ export default async function Home() {
           in your browser, so nothing you paste gets uploaded.
         </p>
         <div className="mt-6 flex flex-wrap items-center gap-3">
+          {/* A Chrome extension can't be installed on a phone or tablet. Where the
+              pointer is a finger, lead with the thing that works there. */}
           <Link
             href="/install"
-            className={cn(buttonVariants(), "h-10 rounded-full px-5 text-sm")}
+            className={cn(
+              buttonVariants(),
+              "h-10 rounded-full px-5 text-sm pointer-coarse:hidden"
+            )}
           >
             Add to Chrome
           </Link>
+          <a
+            href="#bench"
+            className={cn(
+              buttonVariants(),
+              "hidden h-11 rounded-full px-5 text-sm pointer-coarse:inline-flex"
+            )}
+          >
+            Try it on this page
+          </a>
           <Link
             href="/models"
             className={cn(
