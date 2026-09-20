@@ -12,8 +12,11 @@ jobs:
         with: { node-version: 24, cache: pnpm }
       - uses: astral-sh/setup-uv@v6
       - run: pnpm install --frozen-lockfile
-      - run: mkdir -p training/data && curl -sfL "$TRAINING_DATA_URL" | tar -xz -C training/data
-        env: { TRAINING_DATA_URL: '${{ secrets.TRAINING_DATA_URL }}' }
+      # corpus.jsonl, meta.json and X.f32, kept as an asset on this repo's training-data
+      # release so the corpus stays as private as the code. Refresh it after a rebuild:
+      # gh release upload training-data training-data.tar.gz --clobber
+      - run: mkdir -p training/data && gh release download training-data -p training-data.tar.gz -O - | tar -xz -C training/data
+        env: { GH_TOKEN: '${{ github.token }}' }
       - run: node training/pull-feedback.ts > training/data/feedback.jsonl
         env: { DATABASE_URL: '${{ secrets.DATABASE_URL }}' }
       - run: uv venv -p 3.12 training/.venv && uv pip install --python training/.venv/bin/python torch numpy --index-url https://download.pytorch.org/whl/cpu --extra-index-url https://pypi.org/simple
