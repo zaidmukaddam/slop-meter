@@ -1,0 +1,51 @@
+@import "./tokens.css";
+
+@custom-variant dark (@media (prefers-color-scheme: dark));
+
+@theme inline {
+  --color-bench: var(--bench);
+  --color-sheet: var(--sheet);
+  --color-face: var(--face);
+  --color-ink: var(--ink);
+  --color-graphite: var(--graphite);
+  --color-hairline: var(--hairline);
+  --color-etch: var(--etch);
+  --color-human: var(--human);
+  --color-machine: var(--machine);
+  --color-mixed: var(--mixed);
+  --color-unsure: var(--unsure);
+  --color-marker: var(--marker);
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+}
+
+@layer utilities {
+  .legend {
+    font-stretch: 125%;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+}

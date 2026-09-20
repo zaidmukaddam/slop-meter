@@ -1,0 +1,252 @@
+@import "@slop/theme/tokens.css";
+
+:host {
+  --mono: ui-monospace, "SF Mono", Menlo, monospace;
+}
+
+.card {
+  box-sizing: border-box;
+  max-height: 70vh;
+  overflow: auto;
+  padding: 16px;
+  border-radius: 10px;
+  background: var(--popover);
+  color: var(--foreground);
+  font:
+    13px/1.5 system-ui,
+    -apple-system,
+    "Segoe UI",
+    sans-serif;
+  text-align: left;
+  -webkit-font-smoothing: antialiased;
+  box-shadow:
+    0 0 0 1px color-mix(in oklch, var(--foreground) 10%, transparent),
+    0 4px 6px -1px rgb(0 0 0 / 0.1),
+    0 2px 4px -2px rgb(0 0 0 / 0.1);
+}
+
+.head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 20px;
+  padding: 0 8px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+}
+
+.percent {
+  margin-left: auto;
+  font: 300 24px/1 var(--mono);
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+}
+
+.close {
+  width: 24px;
+  height: 24px;
+  margin: -4px -6px 0 auto;
+  border: 0;
+  border-radius: 6px;
+  background: none;
+  color: var(--muted-foreground);
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.percent + .close {
+  margin-left: 4px;
+}
+
+.close:hover {
+  background: var(--muted);
+  color: var(--foreground);
+}
+
+.note,
+.muted {
+  margin: 8px 0 0;
+  color: var(--muted-foreground);
+  font-size: 13px;
+  line-height: 1.5;
+  text-wrap: pretty;
+}
+
+.bar {
+  display: flex;
+  height: 6px;
+  margin-top: 16px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--muted);
+}
+
+.probs {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin: 8px 0 0;
+}
+
+.probs dt {
+  color: var(--muted-foreground);
+}
+
+.probs dd {
+  margin: 0;
+  font: 11px var(--mono);
+  font-variant-numeric: tabular-nums;
+}
+
+.label {
+  margin: 16px 0 6px;
+  color: var(--muted-foreground);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.rules {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.rules li {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 13px;
+  line-height: 1.7;
+}
+
+.rules span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+code {
+  flex: none;
+  color: var(--muted-foreground);
+  font: 11px var(--mono);
+}
+
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 16px;
+}
+
+.row button {
+  height: 28px;
+  padding: 0 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-weight: 500;
+  cursor: pointer;
+  transition: scale 100ms ease-out;
+}
+
+.row button:hover:not(:disabled) {
+  background: var(--muted);
+}
+
+.row button:active:not(:disabled) {
+  scale: 0.96;
+}
+
+.row button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+button:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
+.panel p {
+  margin: 12px 0 0;
+}
+
+.rewrite {
+  max-height: 40vh;
+  margin-top: 12px;
+  overflow: auto;
+  font-size: 13px;
+  white-space: pre-wrap;
+}
+
+ins {
+  background: color-mix(in oklab, var(--human) 16%, transparent);
+  text-decoration: none;
+}
+
+del {
+  background: color-mix(in oklab, var(--machine) 18%, transparent);
+  color: var(--muted-foreground);
+}
+
+.head .label {
+  margin: 0;
+}
+
+.paragraphs {
+  margin: 12px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.paragraphs li {
+  display: grid;
+  grid-template-columns: 6px minmax(0, 1fr) auto;
+  align-items: baseline;
+  gap: 8px;
+  padding: 6px 0;
+  border-top: 1px solid var(--border);
+}
+
+.paragraphs span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.paragraphs .dot {
+  align-self: center;
+}
+
+.removed {
+  color: var(--muted-foreground);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .row button {
+    transition: none;
+  }
+}

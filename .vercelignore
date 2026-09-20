@@ -1,0 +1,13 @@
+.env*
+.vercel
+training/data
+training/.venv
+__pycache__
+node_modules
+.next
+.output
+.wxt
+*.tsbuildinfo
+apps/site/public/model.bin
+apps/site/public/model-lm.bin
+apps/site/public/slop-meter-chrome.zip

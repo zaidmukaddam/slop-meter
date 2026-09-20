@@ -1,0 +1,38 @@
+:root,
+:host {
+  color-scheme: light dark;
+
+  --bench: light-dark(#e6e6e1, #0f100e);
+  --sheet: light-dark(#fdfdfb, #181916);
+  --face: light-dark(#f7f7f3, #1d1e1b);
+  --ink: light-dark(#141412, #ecece6);
+  --graphite: light-dark(#5d5e58, #9c9d95);
+  --hairline: light-dark(#cfcfc8, #2f302b);
+  --etch: light-dark(#b4b5ad, #45463f);
+
+  --human: light-dark(#2e5bcf, #7c9cf5);
+  --machine: light-dark(#e0621d, #ff8b4f);
+  --mixed: light-dark(#a07c35, #d2ae62);
+  --unsure: light-dark(#8c8e86, #6c6e66);
+  --marker: light-dark(#f6e27a, #6b5b17);
+
+  --background: var(--bench);
+  --foreground: var(--ink);
+  --card: var(--sheet);
+  --card-foreground: var(--ink);
+  --popover: var(--sheet);
+  --popover-foreground: var(--ink);
+  --primary: var(--ink);
+  --primary-foreground: light-dark(#fdfdfb, #0f100e);
+  --secondary: light-dark(#dcdcd6, #22231f);
+  --secondary-foreground: var(--ink);
+  --muted: light-dark(#dcdcd6, #22231f);
+  --muted-foreground: var(--graphite);
+  --accent: light-dark(#dcdcd6, #22231f);
+  --accent-foreground: var(--ink);
+  --destructive: light-dark(#c2331b, #ff6b52);
+  --border: var(--hairline);
+  --input: var(--hairline);
+  --ring: var(--graphite);
+  --radius: 0.625rem;
+}

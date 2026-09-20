@@ -1,0 +1,14 @@
+{
+  "name": "@slop/rules",
+  "version": "0.1.0",
+  "type": "module",
+  "exports": {
+    ".": "./index.ts",
+    "./rules.json": "./rules.json",
+    "./weights.json": "./weights.json",
+    "./names": "./names.ts"
+  },
+  "dependencies": {
+    "yaml": "^2.8.1"
+  }
+}

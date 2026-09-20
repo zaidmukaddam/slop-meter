@@ -1,0 +1,15 @@
+node_modules
+.env*
+!.env.example
+.venv
+.next
+.output
+.wxt
+training/data
+*.tsbuildinfo
+__pycache__
+.ruff_cache
+apps/site/public/model.bin
+apps/site/public/model-lm.bin
+apps/site/public/slop-meter-chrome.zip
+.vercel

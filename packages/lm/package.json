@@ -1,0 +1,14 @@
+{
+  "name": "@slop/lm",
+  "version": "0.1.0",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./spec": "./src/spec.ts",
+    "./device": "./src/device.ts",
+    "./runtime-files": "./src/runtime-files.ts"
+  },
+  "dependencies": {
+    "@huggingface/transformers": "^4.3.0"
+  }
+}

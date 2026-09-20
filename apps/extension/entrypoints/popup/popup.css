@@ -1,0 +1,20 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+@import "@fontsource-variable/archivo/wdth.css";
+@import "@fontsource-variable/martian-mono/standard.css";
+@import "@slop/theme/tailwind.css";
+
+@theme inline {
+  --font-sans: "Archivo Variable", system-ui, sans-serif;
+  --font-mono: "Martian Mono Variable", ui-monospace, monospace;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply w-[340px] bg-background font-sans text-foreground antialiased;
+  }
+}

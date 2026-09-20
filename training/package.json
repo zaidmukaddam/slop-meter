@@ -1,0 +1,12 @@
+{
+  "name": "@slop/training",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@slop/features": "workspace:*",
+    "@slop/lm": "workspace:*",
+    "@slop/rules": "workspace:*",
+    "ai": "^7.0.100",
+    "@neondatabase/serverless": "^1.0.0"
+  }
+}

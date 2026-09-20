@@ -1,0 +1,38 @@
+name: retrain
+on:
+  schedule: [{ cron: '0 6 * * 1' }]
+  workflow_dispatch:
+permissions: { contents: write, pull-requests: write }
+jobs:
+  retrain:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 24, cache: pnpm }
+      - uses: astral-sh/setup-uv@v6
+      - run: pnpm install --frozen-lockfile
+      - run: mkdir -p training/data && curl -sfL "$TRAINING_DATA_URL" | tar -xz -C training/data
+        env: { TRAINING_DATA_URL: '${{ secrets.TRAINING_DATA_URL }}' }
+      - run: node training/pull-feedback.ts > training/data/feedback.jsonl
+        env: { DATABASE_URL: '${{ secrets.DATABASE_URL }}' }
+      - run: uv venv -p 3.12 training/.venv && uv pip install --python training/.venv/bin/python torch numpy --index-url https://download.pytorch.org/whl/cpu --extra-index-url https://pypi.org/simple
+      - id: train
+        run: |
+          cd training && .venv/bin/python train.py --feedback data/feedback.jsonl
+          ship=$(jq -r .ship ../eval/retrain-report.json)
+          echo "ship=$ship" >> "$GITHUB_OUTPUT"
+      - if: steps.train.outputs.ship == 'true'
+        run: pnpm test && pnpm parity
+      - if: steps.train.outputs.ship == 'true'
+        uses: peter-evans/create-pull-request@v7
+        with:
+          branch: retrain/weekly
+          title: 'chore: weekly retrain on opt-in feedback'
+          body-path: eval/retrain-report.json
+          add-paths: |
+            packages/model/weights
+            packages/rules/weights.json
+            eval/report.json
+            eval/retrain-report.json

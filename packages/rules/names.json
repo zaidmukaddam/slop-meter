@@ -1,0 +1,154 @@
+{
+  "r-001": {
+    "name": "stock vocabulary",
+    "tier": "lexical"
+  },
+  "r-002": {
+    "name": "copula avoidance",
+    "tier": "lexical"
+  },
+  "r-003": {
+    "name": "filler phrases",
+    "tier": "lexical"
+  },
+  "r-004": {
+    "name": "chatbot artifacts",
+    "tier": "lexical"
+  },
+  "r-005": {
+    "name": "promotional adjectives",
+    "tier": "lexical"
+  },
+  "r-006": {
+    "name": "abstract metaphor nouns",
+    "tier": "lexical"
+  },
+  "r-007": {
+    "name": "stacked transitions",
+    "tier": "lexical"
+  },
+  "r-008": {
+    "name": "knowledge-cutoff disclaimers",
+    "tier": "lexical"
+  },
+  "r-009": {
+    "name": "em-dash density",
+    "tier": "punctuation"
+  },
+  "r-010": {
+    "name": "colon as connector",
+    "tier": "punctuation"
+  },
+  "r-011": {
+    "name": "bold-label lists",
+    "tier": "punctuation"
+  },
+  "r-012": {
+    "name": "title-case headings",
+    "tier": "punctuation"
+  },
+  "r-013": {
+    "name": "decorative emoji",
+    "tier": "punctuation"
+  },
+  "r-014": {
+    "name": "negative parallelism",
+    "tier": "structural"
+  },
+  "r-015": {
+    "name": "quote style",
+    "tier": "punctuation"
+  },
+  "r-016": {
+    "name": "list density",
+    "tier": "punctuation"
+  },
+  "r-017": {
+    "name": "uniform sentence length",
+    "tier": "statistical"
+  },
+  "r-018": {
+    "name": "adverb density",
+    "tier": "statistical"
+  },
+  "r-019": {
+    "name": "passive ratio",
+    "tier": "statistical"
+  },
+  "r-020": {
+    "name": "hedging stacks",
+    "tier": "statistical"
+  },
+  "r-021": {
+    "name": "groups of three",
+    "tier": "statistical"
+  },
+  "r-022": {
+    "name": "lexical diversity",
+    "tier": "statistical"
+  },
+  "r-023": {
+    "name": "long-word share",
+    "tier": "statistical"
+  },
+  "r-024": {
+    "name": "recap openers",
+    "tier": "structural"
+  },
+  "r-025": {
+    "name": "stop-start fragments",
+    "tier": "structural"
+  },
+  "r-026": {
+    "name": "false ranges",
+    "tier": "structural"
+  },
+  "r-027": {
+    "name": "openers with no antecedent",
+    "tier": "structural"
+  },
+  "r-028": {
+    "name": "participle tail clauses",
+    "tier": "structural"
+  },
+  "r-029": {
+    "name": "staged reveal questions",
+    "tier": "structural"
+  },
+  "r-030": {
+    "name": "repeated sentence openers",
+    "tier": "structural"
+  },
+  "r-031": {
+    "name": "significance inflation",
+    "tier": "semantic"
+  },
+  "r-032": {
+    "name": "vague attribution",
+    "tier": "semantic"
+  },
+  "r-033": {
+    "name": "challenges-and-prospects arc",
+    "tier": "semantic"
+  },
+  "r-034": {
+    "name": "absence of voice",
+    "tier": "semantic"
+  },
+  "r-035": {
+    "name": "generic upbeat conclusion",
+    "tier": "semantic"
+  },
+  "r-036": {
+    "name": "synonym cycling",
+    "tier": "semantic"
+  },
+  "r-037": {
+    "name": "uniform register",
+    "tier": "semantic"
+  },
+  "r-038": {
+    "name": "both-sides wrap-up",
+    "tier": "semantic"
+  }
+}

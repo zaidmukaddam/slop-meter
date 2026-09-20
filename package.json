@@ -1,0 +1,23 @@
+{
+  "name": "slop-meter",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "rules": "node packages/rules/validate.ts",
+    "test": "node --test 'packages/*/test/*.test.ts' 'apps/site/test/*.test.ts'",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "parity": "node packages/model/test/parity.ts",
+    "size": "node apps/extension/size-gate.ts",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "check": "pnpm rules && pnpm format:check && pnpm typecheck && pnpm test && pnpm parity && pnpm --filter @slop/site build && pnpm size"
+  },
+  "devDependencies": {
+    "@types/node": "^24",
+    "@webgpu/types": "^0.1.72",
+    "prettier": "^3.9.7",
+    "prettier-plugin-tailwindcss": "^0.6.14",
+    "typescript": "^5.9"
+  },
+  "packageManager": "pnpm@11.24.0"
+}

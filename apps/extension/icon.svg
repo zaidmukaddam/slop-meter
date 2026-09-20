@@ -1,0 +1,10 @@
+<!-- Source of public/icon/*.png: the site's meter mark on an ink tile, so it reads on light and dark toolbars. -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
+  <rect width="128" height="128" rx="28" fill="#141412" />
+  <g transform="translate(4 -2) scale(6)" fill="none" stroke-linecap="round">
+    <path d="M3.5 13.5a8 8 0 0 1 13 0" stroke="#ecece6" stroke-width="1.75" />
+    <path d="M10 5.2v1.6M5 8l1 1.2M15 8l-1 1.2" stroke="#ecece6" stroke-width="1.5" />
+    <path d="M10 16l3.6-6.4" stroke="#ff8b4f" stroke-width="1.75" />
+    <circle cx="10" cy="16" r="1.5" fill="#ecece6" />
+  </g>
+</svg>

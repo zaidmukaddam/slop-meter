@@ -1,0 +1,446 @@
+[
+  {
+    "id": "r-001",
+    "name": "stock vocabulary",
+    "tier": "lexical",
+    "detect": "words that machine text over-uses relative to human prose (delve, tapestry, pivotal, intricate, multifaceted, foster, bolster, garner, leverage, seamless, robust, nuanced, meticulous, embark, underscore, showcase)",
+    "fix": "use the plain word, or cut it; most of these carry no meaning in context",
+    "weight": "learned",
+    "example": {
+      "tell": "We delve into the intricate tapestry of pivotal ideas that foster robust growth.",
+      "plain": "We looked at the ideas that helped the town grow."
+    }
+  },
+  {
+    "id": "r-002",
+    "name": "copula avoidance",
+    "tier": "lexical",
+    "detect": "fancy substitutes for \"is\" and \"has\" (\"serves as\", \"stands as\", \"acts as\", \"boasts\", \"features a\")",
+    "fix": "write \"is\" or \"has\"",
+    "weight": "learned",
+    "example": {
+      "tell": "The library serves as a hub and boasts a large collection.",
+      "plain": "The library is a hub and has a large collection."
+    }
+  },
+  {
+    "id": "r-003",
+    "name": "filler phrases",
+    "tier": "lexical",
+    "detect": "phrases that announce content instead of stating it (\"it's important to note\", \"it is worth noting\", \"in today's fast-paced world\", \"when it comes to\", \"at the end of the day\")",
+    "fix": "delete the phrase and start at the point",
+    "weight": "learned",
+    "example": {
+      "tell": "It's important to note that, when it comes to sleep, in order to rest you need quiet.",
+      "plain": "You need quiet to rest."
+    }
+  },
+  {
+    "id": "r-004",
+    "name": "chatbot artifacts",
+    "tier": "lexical",
+    "detect": "assistant openers and sign-offs left in the text (\"Certainly!\", \"Great question\", \"I hope this helps\", \"let me know if\", \"feel free to\")",
+    "fix": "delete them",
+    "weight": "learned",
+    "example": {
+      "tell": "Certainly! Here are some tips. I hope this helps, and let me know if you need more.",
+      "plain": "Here are the tips I use."
+    }
+  },
+  {
+    "id": "r-005",
+    "name": "promotional adjectives",
+    "tier": "lexical",
+    "detect": "brochure words (breathtaking, stunning, nestled, vibrant, renowned, world-class, unparalleled, cutting-edge, must-visit)",
+    "fix": "replace with a concrete detail, or drop the adjective",
+    "weight": "learned",
+    "example": {
+      "tell": "Nestled in the hills, this breathtaking, world-class resort is a must-visit.",
+      "plain": "The hotel is in the hills and costs $90 a night."
+    }
+  },
+  {
+    "id": "r-006",
+    "name": "abstract metaphor nouns",
+    "tier": "lexical",
+    "detect": "figurative nouns doing no work (tapestry, landscape, realm, journey, symphony, beacon, cornerstone, testament, mosaic, fabric)",
+    "fix": "name the actual thing",
+    "weight": "learned",
+    "example": {
+      "tell": "The rich tapestry of the culinary landscape is a testament to the city.",
+      "plain": "The city has good food."
+    }
+  },
+  {
+    "id": "r-007",
+    "name": "stacked transitions",
+    "tier": "lexical",
+    "detect": "formal connectives at sentence starts (Moreover, Furthermore, Additionally, Consequently, Notably, Importantly, Ultimately)",
+    "fix": "drop the connective; if the logic needs it, use \"and\", \"but\", \"so\"",
+    "weight": "learned",
+    "example": {
+      "tell": "It rained. Moreover, it was cold. Furthermore, the bus was late. Additionally, I lost my keys.",
+      "plain": "It rained. It was cold. The bus was late and I lost my keys."
+    }
+  },
+  {
+    "id": "r-008",
+    "name": "knowledge-cutoff disclaimers",
+    "tier": "lexical",
+    "detect": "model hedges about its own knowledge (\"as of my last update\", \"while specific details are limited\", \"I don't have access to\")",
+    "fix": "delete, and either find the fact or leave it out",
+    "weight": "learned",
+    "example": {
+      "tell": "As of my last update, the company had 40 staff, while specific details are limited.",
+      "plain": "The company had 40 staff in 2019."
+    }
+  },
+  {
+    "id": "r-009",
+    "name": "em-dash density",
+    "tier": "punctuation",
+    "detect": "em dashes (or spaced double hyphens) per sentence well above the human baseline",
+    "fix": "use a comma, a period, or parentheses; keep at most one dash per paragraph",
+    "weight": "learned",
+    "example": {
+      "tell": "The plan — bold as it was — failed. The team — tired — went home. The end — finally.",
+      "plain": "The plan failed, and the team went home tired."
+    }
+  },
+  {
+    "id": "r-010",
+    "name": "colon as connector",
+    "tier": "punctuation",
+    "detect": "mid-sentence colons that set up a reveal (\"The answer is simple: consistency.\")",
+    "fix": "make it two sentences or state it directly",
+    "weight": "learned",
+    "example": {
+      "tell": "The answer is simple: consistency beats talent every time you practice.",
+      "plain": "Consistency beats talent."
+    }
+  },
+  {
+    "id": "r-011",
+    "name": "bold-label lists",
+    "tier": "punctuation",
+    "detect": "list items that start with a bolded label and a colon (\"**Speed:** …\")",
+    "fix": "write sentences, or a plain list without labels",
+    "weight": "learned",
+    "example": {
+      "tell": "- **Speed:** it is fast\n- **Cost:** it is cheap\n- **Scale:** it grows",
+      "plain": "- it is fast\n- it is cheap\n- it grows"
+    }
+  },
+  {
+    "id": "r-012",
+    "name": "title-case headings",
+    "tier": "punctuation",
+    "detect": "short heading lines with Every Major Word Capitalized",
+    "fix": "sentence case",
+    "weight": "learned",
+    "example": {
+      "tell": "Why Remote Work Changes Everything Forever\nSome people disagree about this, and they have reasons.",
+      "plain": "Why remote work changes things\nSome people disagree about this, and they have reasons."
+    }
+  },
+  {
+    "id": "r-013",
+    "name": "decorative emoji",
+    "tier": "punctuation",
+    "detect": "emoji used as bullets or section decoration (🚀 ✨ 💡 ✅ 👉)",
+    "fix": "remove them",
+    "weight": "learned",
+    "example": {
+      "tell": "🚀 Launching today! ✨ New features. 💡 Big ideas.",
+      "plain": "Launching today with new features."
+    }
+  },
+  {
+    "id": "r-014",
+    "name": "negative parallelism",
+    "tier": "structural",
+    "detect": "sentence pairs in a \"not just X, it's Y\" shape (\"It's not just a tool, it's a movement\", \"not only ... but also\")",
+    "fix": "state the point directly",
+    "weight": "learned",
+    "example": {
+      "tell": "It's not just a tool, it's a movement. This is not only fast but also cheap.",
+      "plain": "The tool is fast and cheap."
+    }
+  },
+  {
+    "id": "r-015",
+    "name": "quote style",
+    "tier": "punctuation",
+    "detect": "typographic curly quotes and apostrophes in contexts where people type straight ones",
+    "fix": "none needed for meaning; this is a provenance signal, not a style error",
+    "weight": "learned",
+    "example": {
+      "tell": "“Hello,” she said. “It’s late.”",
+      "plain": "\"Hello,\" she said. \"It's late.\""
+    }
+  },
+  {
+    "id": "r-016",
+    "name": "list density",
+    "tier": "punctuation",
+    "detect": "the share of lines that are bullets or numbered items",
+    "fix": "fold short lists back into sentences",
+    "weight": "learned",
+    "example": {
+      "tell": "Steps:\n- one\n- two\n- three",
+      "plain": "We did one thing, then two, then three."
+    }
+  },
+  {
+    "id": "r-017",
+    "name": "uniform sentence length",
+    "tier": "statistical",
+    "detect": "low variance in sentence length (low burstiness); human prose mixes very short and very long sentences",
+    "fix": "vary the rhythm; let one sentence run, cut another to three words",
+    "weight": "learned",
+    "example": {
+      "tell": "The system works well in most cases. The team built it over many months. The users like it a lot now. The results are good for all of us.",
+      "plain": "No. The system, which the team built over many long and difficult months in a cramped office above a bakery, mostly works. Users like it."
+    }
+  },
+  {
+    "id": "r-018",
+    "name": "adverb density",
+    "tier": "statistical",
+    "detect": "more -ly adverbs per 100 words than human prose uses",
+    "fix": "pick a stronger verb or delete the adverb",
+    "weight": "learned",
+    "example": {
+      "tell": "She quickly and carefully and quietly and deliberately closed the door.",
+      "plain": "She closed the door."
+    }
+  },
+  {
+    "id": "r-019",
+    "name": "passive ratio",
+    "tier": "statistical",
+    "detect": "the share of sentences in the passive voice (a form of \"be\" plus a past participle)",
+    "fix": "name who did it",
+    "weight": "learned",
+    "example": {
+      "tell": "The report was written by the team. The data was collected in May. Errors were found.",
+      "plain": "The team wrote the report. We collected data in May. We found errors."
+    }
+  },
+  {
+    "id": "r-020",
+    "name": "hedging stacks",
+    "tier": "statistical",
+    "detect": "two or more hedges in one sentence (may, might, could, potentially, arguably, generally, often, typically, somewhat)",
+    "fix": "commit to the claim, or say exactly what is uncertain",
+    "weight": "learned",
+    "example": {
+      "tell": "This may potentially help and could possibly improve results. It might generally work.",
+      "plain": "This helps. It improved results by 4%."
+    }
+  },
+  {
+    "id": "r-021",
+    "name": "groups of three",
+    "tier": "statistical",
+    "detect": "more \"X, Y, and Z\" triads per sentence than human prose uses",
+    "fix": "keep the one or two items that matter",
+    "weight": "learned",
+    "example": {
+      "tell": "It is fast, cheap, and reliable. It is simple, clear, and useful. It is small, light, and strong.",
+      "plain": "It is fast. It costs less than the old one."
+    }
+  },
+  {
+    "id": "r-022",
+    "name": "lexical diversity",
+    "tier": "statistical",
+    "detect": "words that rarely repeat for the paragraph's length (a high moving type-token ratio), a side effect of synonym cycling",
+    "fix": "repeat the right word instead of rotating synonyms",
+    "weight": "learned"
+  },
+  {
+    "id": "r-023",
+    "name": "long-word share",
+    "tier": "statistical",
+    "detect": "the share of words with 10 or more letters",
+    "fix": "prefer the short word when it says the same thing",
+    "weight": "learned",
+    "example": {
+      "tell": "Unquestionably, the extraordinary organizational transformation necessitates comprehensive implementation strategies.",
+      "plain": "The big change needs a plan we can follow."
+    }
+  },
+  {
+    "id": "r-024",
+    "name": "recap openers",
+    "tier": "structural",
+    "detect": "paragraphs that open by summarizing (\"In summary\", \"Overall\", \"In conclusion\", \"As mentioned\", \"To sum up\")",
+    "fix": "cut the recap; start with the new point",
+    "weight": "learned",
+    "example": {
+      "tell": "In conclusion, the plan worked and the team was happy with how it went overall.",
+      "plain": "The plan worked and the team was happy with how it went."
+    }
+  },
+  {
+    "id": "r-025",
+    "name": "stop-start fragments",
+    "tier": "structural",
+    "detect": "runs of very short verbless fragments (\"No fluff. No filler. Just results.\")",
+    "fix": "join them into one sentence that says the thing",
+    "weight": "learned",
+    "example": {
+      "tell": "No fluff. No filler. Just results. That is what we promise every single customer who calls.",
+      "plain": "We promise every customer results without any filler."
+    }
+  },
+  {
+    "id": "r-026",
+    "name": "false ranges",
+    "tier": "structural",
+    "detect": "a \"from X to Y\" phrase where X and Y are not ends of a scale (\"from ancient rituals to modern cuisine\")",
+    "fix": "list the specific things, or pick one",
+    "weight": "learned",
+    "example": {
+      "tell": "The festival covers everything from ancient rituals to modern cuisine.",
+      "plain": "The festival runs from 9am to 5pm."
+    }
+  },
+  {
+    "id": "r-027",
+    "name": "openers with no antecedent",
+    "tier": "structural",
+    "detect": "paragraphs that open by pointing at nothing (\"This\", \"These\", \"Here's the thing\", \"That's why\", \"The result?\")",
+    "fix": "name the subject",
+    "weight": "learned",
+    "example": {
+      "tell": "This is why the approach matters so much for teams who ship every week.",
+      "plain": "Weekly releases make the approach matter for teams."
+    }
+  },
+  {
+    "id": "r-028",
+    "name": "participle tail clauses",
+    "tier": "structural",
+    "detect": "sentences ending in \", highlighting/underscoring/reflecting/showcasing/emphasizing …\" analysis tails",
+    "fix": "delete the tail, or make its claim a sentence with evidence",
+    "weight": "learned",
+    "example": {
+      "tell": "The city grew fast, highlighting its importance to the region.",
+      "plain": "The city grew fast."
+    }
+  },
+  {
+    "id": "r-029",
+    "name": "staged reveal questions",
+    "tier": "structural",
+    "detect": "a short rhetorical question answered immediately (\"The result? …\", \"Why does this matter? Because …\")",
+    "fix": "state the answer",
+    "weight": "learned",
+    "example": {
+      "tell": "We tried everything for weeks. The result? A faster app for everyone who uses it.",
+      "plain": "We tried everything for weeks and the app got faster."
+    }
+  },
+  {
+    "id": "r-030",
+    "name": "repeated sentence openers",
+    "tier": "structural",
+    "detect": "many sentences in a paragraph starting with the same word",
+    "fix": "vary the subject or merge sentences",
+    "weight": "learned",
+    "example": {
+      "tell": "The app is fast. The app is cheap. The app is simple. The app is new.",
+      "plain": "The app is fast. It costs little. Setup takes a minute. Version two ships soon."
+    }
+  },
+  {
+    "id": "r-031",
+    "name": "significance inflation",
+    "tier": "semantic",
+    "detect": "claims of importance with no specifics (\"plays a pivotal role\", \"stands as a testament\", \"marks a significant shift\", \"enduring legacy\")",
+    "fix": "say what happened and let the reader judge",
+    "weight": "learned",
+    "example": {
+      "tell": "The bridge plays a pivotal role and stands as a testament to its enduring legacy.",
+      "plain": "The bridge carries 40,000 cars a day."
+    }
+  },
+  {
+    "id": "r-032",
+    "name": "vague attribution",
+    "tier": "semantic",
+    "detect": "unnamed authorities (\"experts say\", \"studies show\", \"critics argue\", \"observers have noted\", \"it is widely believed\")",
+    "fix": "name the source, or drop the claim",
+    "weight": "learned",
+    "example": {
+      "tell": "Experts say the diet works, and studies show it helps.",
+      "plain": "A 2019 trial of 400 adults found the diet cut weight by 2 kg."
+    }
+  },
+  {
+    "id": "r-033",
+    "name": "challenges-and-prospects arc",
+    "tier": "semantic",
+    "detect": "formulaic \"despite its challenges … continues to thrive\" framing",
+    "fix": "describe the specific problem and its specific outcome",
+    "weight": "learned",
+    "example": {
+      "tell": "Despite these challenges, the town continues to thrive.",
+      "plain": "The mill closed in 1987 and the town lost a third of its jobs."
+    }
+  },
+  {
+    "id": "r-034",
+    "name": "absence of voice",
+    "tier": "semantic",
+    "detect": "paragraphs long enough to expect first person, contractions or opinion markers, with none of them",
+    "fix": "say what you think and why; write the way you talk",
+    "weight": "learned",
+    "example": {
+      "tell": "The organization provides services to customers in many regions. The services include support, training, and consulting. The organization was founded to address needs in the market and has expanded over time into several new areas of operation across the country.",
+      "plain": "I think the company's support is good. We've used it for years, and honestly I'd pick it again over the others we tried, even though it's pricier than I'd like."
+    }
+  },
+  {
+    "id": "r-035",
+    "name": "generic upbeat conclusion",
+    "tier": "semantic",
+    "detect": "closing lines about a bright future or exciting possibilities (\"the future looks bright\", \"exciting times ahead\", \"the possibilities are endless\")",
+    "fix": "end on the last concrete point",
+    "weight": "learned",
+    "example": {
+      "tell": "The future looks bright, and the possibilities are endless.",
+      "plain": "The next release is due in March."
+    }
+  },
+  {
+    "id": "r-036",
+    "name": "synonym cycling",
+    "tier": "semantic",
+    "detect": "the same referent renamed each sentence (the city, the metropolis, the urban center)",
+    "fix": "pick one name and repeat it",
+    "weight": "learned"
+  },
+  {
+    "id": "r-037",
+    "name": "uniform register",
+    "tier": "semantic",
+    "detect": "an even, polite, mid-formal tone with no shifts, jokes, or asides",
+    "fix": "let the register move with the content",
+    "weight": "learned"
+  },
+  {
+    "id": "r-038",
+    "name": "both-sides wrap-up",
+    "tier": "semantic",
+    "detect": "closing balance that avoids a position (\"ultimately, it depends\", \"there is no one-size-fits-all\", \"both have their merits\")",
+    "fix": "take a position, or say what it depends on",
+    "weight": "learned",
+    "example": {
+      "tell": "Ultimately, it depends on your needs; there is no one-size-fits-all answer.",
+      "plain": "Pick Postgres unless you need offline sync."
+    }
+  }
+]

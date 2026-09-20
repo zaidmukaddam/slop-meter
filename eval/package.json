@@ -1,0 +1,17 @@
+{
+  "name": "@slop/eval",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./report.json": "./report.json",
+    "./report-lm.json": "./report-lm.json",
+    "./jev-study.json": "./jev-study.json",
+    "./examples.json": "./examples.json"
+  },
+  "dependencies": {
+    "@slop/features": "workspace:*",
+    "@slop/model": "workspace:*",
+    "@slop/rules": "workspace:*",
+    "ai": "^7.0.100"
+  }
+}

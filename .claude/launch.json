@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "site",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": ["--filter", "@slop/site", "dev", "--port", "3100"],
+      "port": 3100
+    }
+  ]
+}

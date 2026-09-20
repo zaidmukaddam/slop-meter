@@ -1,0 +1,23 @@
+name: ci
+on: [push, pull_request]
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 24, cache: pnpm }
+      - run: sudo apt-get update && sudo apt-get install -y mesa-vulkan-drivers
+      - run: pnpm install --frozen-lockfile
+      - name: rulebook schema
+        run: pnpm rules && git diff --exit-code packages/rules/rules.json
+      - run: pnpm format:check
+      - run: pnpm typecheck
+      - run: pnpm test
+      - name: TS/WGSL parity (1e-3)
+        run: pnpm parity
+        env: { PARITY_REQUIRED: '1' }
+      - run: pnpm --filter @slop/site build
+      - name: bundle-size gate (content script + model < 120 KB)
+        run: pnpm size

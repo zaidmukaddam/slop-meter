@@ -1,0 +1,21 @@
+{
+  "name": "@slop/model",
+  "version": "0.1.0",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./manifest.json": "./weights/manifest.json",
+    "./model.bin": "./weights/model.bin",
+    "./lm/manifest.json": "./weights/lm/manifest.json",
+    "./lm/model.bin": "./weights/lm/model.bin"
+  },
+  "dependencies": {
+    "@slop/features": "workspace:*",
+    "@slop/lm": "workspace:*",
+    "@slop/rules": "workspace:*"
+  },
+  "devDependencies": {
+    "webgpu": "^0.3.8",
+    "@webgpu/types": "^0.1.66"
+  }
+}

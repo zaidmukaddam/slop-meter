@@ -1,0 +1,14 @@
+packages:
+  - apps/*
+  - packages/*
+  - training
+  - eval
+minimumReleaseAge: 0
+allowBuilds:
+  esbuild: true
+  sharp: true
+  webgpu: true
+  spawn-sync: false
+  "@parcel/watcher": true
+  onnxruntime-node: false
+  protobufjs: false

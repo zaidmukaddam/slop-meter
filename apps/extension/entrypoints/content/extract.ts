@@ -1,0 +1,188 @@
+const SKIPPED_CONTAINERS = [
+  "nav",
+  "header",
+  "footer",
+  "aside",
+  "form",
+  "pre",
+  "code",
+  "[contenteditable]",
+  '[aria-hidden="true"]',
+  "button",
+  "select",
+  "textarea",
+  "noscript",
+  "template",
+].join(",")
+
+const CANDIDATES = "p,ul,ol,div,dd,blockquote"
+const WRAPPER_TAGS = new Set(["div", "dd", "blockquote"])
+const BLOCK_LEVEL =
+  "p,div,ul,ol,dl,table,pre,blockquote,section,article,figure,h1,h2,h3,h4,h5,h6,li"
+const IGNORED_INLINE = new Set(["script", "style", "noscript", "svg"])
+const BOLD_TAGS = new Set(["strong", "b"])
+
+const MAX_LINK_TEXT_SHARE = 0.5
+const MIN_CONTENT_CHARS = 80
+
+export function countWords(text: string): number {
+  return text.match(/\S+/g)?.length ?? 0
+}
+
+export function findBlocks(
+  minWords: number,
+  isTracked: (el: HTMLElement) => boolean
+): HTMLElement[] {
+  const found: HTMLElement[] = []
+  for (const root of contentRoots()) {
+    for (const el of root.querySelectorAll<HTMLElement>(CANDIDATES)) {
+      if (!isTracked(el) && isContentBlock(el, root, minWords)) found.push(el)
+    }
+  }
+  return found
+}
+
+function isContentBlock(el: HTMLElement, root: Element, minWords: number) {
+  if (el.parentElement?.closest("li,p")) return false
+  if (WRAPPER_TAGS.has(el.localName) && el.querySelector(BLOCK_LEVEL)) {
+    return false
+  }
+  const skipped = el.closest(SKIPPED_CONTAINERS)
+  if (skipped && root.contains(skipped)) return false
+
+  const text = el.textContent ?? ""
+  if (countWords(text) < minWords) return false
+  return linkTextLength(el) <= text.length * MAX_LINK_TEXT_SHARE
+}
+
+function linkTextLength(el: Element): number {
+  let length = 0
+  for (const link of el.querySelectorAll("a")) {
+    length += link.textContent?.length ?? 0
+  }
+  return length
+}
+
+function contentRoots(): Element[] {
+  const main = document.querySelector('main,[role="main"]')
+  if (main) return [main]
+
+  const articles = [...document.querySelectorAll("article")].filter(
+    (article) => !article.parentElement?.closest("article")
+  )
+  if (articles.length > 0) return articles
+
+  return [commonContainer()]
+}
+
+function commonContainer(): Element {
+  let root: Element | null = null
+  for (const paragraph of document.body.querySelectorAll("p")) {
+    if ((paragraph.textContent?.length ?? 0) < MIN_CONTENT_CHARS) continue
+    if (paragraph.closest(SKIPPED_CONTAINERS)) continue
+    root ??= paragraph.parentElement
+    while (root && !root.contains(paragraph)) root = root.parentElement
+  }
+  return root ?? document.body
+}
+
+export type TextPosition = { node: Text; offset: number }
+
+export type SerializedBlock = {
+  text: string
+  positions: (TextPosition | null)[]
+}
+
+export function serializeBlock(el: Element): SerializedBlock {
+  const builder = new TextBuilder()
+  if (el.localName === "ul" || el.localName === "ol") builder.appendList(el)
+  else builder.appendChildren(el, false)
+  builder.trimTrailingSpace()
+  return { text: builder.text, positions: builder.positions }
+}
+
+class TextBuilder {
+  text = ""
+  positions: (TextPosition | null)[] = []
+  private afterSpace = true
+
+  appendList(list: Element) {
+    for (const item of list.children) {
+      if (item.localName !== "li") continue
+      if (this.text) {
+        this.trimTrailingSpace()
+        this.appendMarkup("\n")
+      }
+      this.appendMarkup("- ")
+      this.afterSpace = true
+      this.appendChildren(item, false)
+    }
+  }
+
+  appendChildren(parent: Node, insideBold: boolean) {
+    for (const child of parent.childNodes) {
+      if (child instanceof Text) this.appendText(child)
+      else if (child instanceof Element) this.appendElement(child, insideBold)
+    }
+  }
+
+  trimTrailingSpace() {
+    while (this.text.endsWith(" ")) this.truncate(this.text.length - 1)
+  }
+
+  private appendElement(el: Element, insideBold: boolean) {
+    const tag = el.localName
+    if (IGNORED_INLINE.has(tag) || tag === "slop-card") return
+    if (tag === "br") {
+      this.trimTrailingSpace()
+      this.appendMarkup("\n")
+      this.afterSpace = true
+    } else if (BOLD_TAGS.has(tag) && !insideBold) {
+      this.appendBold(el)
+    } else {
+      this.appendChildren(el, insideBold)
+    }
+  }
+
+  private appendBold(el: Element) {
+    const start = this.text.length
+    this.appendMarkup("**")
+    this.appendChildren(el, true)
+    this.trimTrailingSpace()
+    if (this.text.length === start + "**".length) {
+      this.truncate(start)
+      return
+    }
+    this.appendMarkup("**")
+    this.afterSpace = false
+  }
+
+  private appendText(node: Text) {
+    const data = node.data
+    for (let offset = 0; offset < data.length; offset++) {
+      const char = data[offset]
+      if (!/\s/.test(char)) {
+        this.appendChar(char, { node, offset })
+        this.afterSpace = false
+      } else if (!this.afterSpace) {
+        this.appendChar(" ", { node, offset })
+        this.afterSpace = true
+      }
+    }
+  }
+
+  private appendMarkup(markup: string) {
+    this.text += markup
+    for (let i = 0; i < markup.length; i++) this.positions.push(null)
+  }
+
+  private appendChar(char: string, position: TextPosition) {
+    this.text += char
+    this.positions.push(position)
+  }
+
+  private truncate(length: number) {
+    this.text = this.text.slice(0, length)
+    this.positions.length = length
+  }
+}
