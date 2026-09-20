@@ -72,7 +72,7 @@ node featurize-lm.ts && .venv/bin/python train.py --lm   # sharper model, about 
 - Weakest on model-polished human text, whose top guess is human 43% of the time, and on paraphrased machine text, a coin flip.
 - Formal human prose leans machine-ish. The Federal Reserve example on the site is the standing counterexample.
 - Text from current models mostly gets can't tell. Short posts and replies lean machine; long essays lean either way.
-- Text written as one element with blank lines between paragraphs is marked run by run, drawn in an overlay. Those runs can't take keyboard focus, so the card opens on hover there, not by tabbing.
+- Text written as one element with blank lines between paragraphs is marked run by run, drawn in an overlay. Those lamps are the tab stop, since a run has no element of its own to focus.
 - Sharper reading needs WebGPU with 16-bit floats. The language model downloads once, about 120 MB, and adds roughly 800 MB to the tab while it runs.
 - Human web prose comes from one C4 shard (3,000 pages, 2019). RAID's parquet mirror covers 4 of its 8 domains.
 - English only.

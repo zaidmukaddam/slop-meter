@@ -29,7 +29,7 @@ export default defineContentScript({
       if (settings.lm) void sharpenBlocks(batch)
       pushSummary()
     })
-    const lamps = new Lamps()
+    const lamps = new Lamps((block) => card.open(block, null))
     const card = new Card(readSiteClass(), () => settings)
     const triggers = new CardTriggers(card, (el, y) => scheduler.get(el, y))
     const onResize = () => redraw()

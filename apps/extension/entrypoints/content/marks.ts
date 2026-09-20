@@ -1,4 +1,4 @@
-import type { Score } from "@slop/model"
+import { DECISION_LABEL, type Score, shownP } from "@slop/model"
 import { ANSWER_HEX, MARKER_HEX } from "@slop/theme/palette"
 import { firstLineRect } from "./extract"
 import { HIGHLIGHT_NAME } from "./highlight"
@@ -28,6 +28,13 @@ export class Lamps {
   private layer = document.createElement("slop-marks")
   private lamps = new Map<Block, HTMLElement>()
 
+  /** A run of text has no element to focus, so its own lamp takes the tab stop. */
+  constructor(private onPick: (block: Block) => void) {}
+
+  lampFor(block: Block): HTMLElement | undefined {
+    return this.lamps.get(block)
+  }
+
   mount(): void {
     this.layer.style.cssText =
       "position:absolute;top:0;left:0;width:0;height:0;pointer-events:none;z-index:2147483646"
@@ -49,8 +56,22 @@ export class Lamps {
     if (!lamp) {
       lamp = document.createElement("slop-mark")
       lamp.style.cssText = `position:absolute;width:${LAMP_PX}px;height:${LAMP_PX}px;border-radius:50%`
+      if (block.nodes) {
+        lamp.style.pointerEvents = "auto"
+        lamp.tabIndex = 0
+        lamp.setAttribute("role", "button")
+        lamp.addEventListener("focus", () => this.onPick(block))
+        lamp.addEventListener("click", () => this.onPick(block))
+        block.focusEl = lamp
+      }
       this.lamps.set(block, lamp)
       this.layer.append(lamp)
+    }
+    if (block.nodes) {
+      lamp.setAttribute(
+        "aria-label",
+        `${DECISION_LABEL[score.localDecision]}, ${Math.round(shownP(score.localP) * 100)} percent. Paragraph reading.`
+      )
     }
     const p = Math.min(1, Math.max(0, score.localP))
     lamp.style.left = `${line.left + scrollX - LAMP_GAP_PX - LAMP_PX}px`
@@ -62,6 +83,7 @@ export class Lamps {
   erase(block: Block): void {
     this.lamps.get(block)?.remove()
     this.lamps.delete(block)
+    block.focusEl = undefined
   }
 }
 

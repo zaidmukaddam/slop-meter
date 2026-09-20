@@ -130,7 +130,7 @@ export class CardTriggers {
     const block = this.card.block
     if (!block || this.card.pinned || !this.card.openedByKeyboard) return
     const staysWithCard = (node: EventTarget | null) =>
-      node === block.el || node === this.card.host
+      node === (block.focusEl ?? block.el) || node === this.card.host
     if (staysWithCard(event.target) && !staysWithCard(event.relatedTarget)) {
       this.card.close()
     }

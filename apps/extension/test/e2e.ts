@@ -427,6 +427,22 @@ async function checkLineBreaks(context: BrowserContext) {
   })
   check(aligned.beside, "each lamp sits in the margin beside its own run")
   check(aligned.ordered, "lamps follow the runs down the page")
+
+  await page.evaluate(() =>
+    document.querySelector<HTMLElement>("slop-marks slop-mark")?.focus()
+  )
+  const reachable = await cardLocator(page)
+    .waitFor({ state: "visible", timeout: 5000 })
+    .then(
+      () => true,
+      () => false
+    )
+  check(reachable, "a run's lamp takes focus and opens its card")
+  await page.keyboard.press("Escape")
+  const refocused = await page.evaluate(
+    () => document.activeElement?.tagName.toLowerCase() === "slop-mark"
+  )
+  check(refocused, "Escape closes the card and puts focus back on the lamp")
   await page.close()
 }
 

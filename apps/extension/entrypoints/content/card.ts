@@ -147,7 +147,7 @@ export class Card {
     this.close()
     if (!block || !hadFocus) return
     this.refocusing = true
-    block.el.focus({ preventScroll: true })
+    ;(block.focusEl ?? block.el).focus({ preventScroll: true })
     this.refocusing = false
   }
 
