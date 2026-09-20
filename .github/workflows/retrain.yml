@@ -4,13 +4,16 @@ on:
 permissions: { contents: write, pull-requests: write }
 jobs:
   retrain:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
         with: { node-version: 24, cache: pnpm }
-      - uses: astral-sh/setup-uv@v6
+      # No cache: this repo has no Python lockfile to key one on, and the job runs by hand.
+      # setup-uv publishes exact tags only, no floating major.
+      - uses: astral-sh/setup-uv@v10.1.0
+        with: { enable-cache: false }
       - run: pnpm install --frozen-lockfile
       # corpus.jsonl, meta.json and X.f32, kept as an asset on this repo's training-data
       # release so the corpus stays as private as the code. Refresh it after a rebuild:
@@ -28,7 +31,7 @@ jobs:
       - if: steps.train.outputs.ship == 'true'
         run: pnpm test && pnpm parity
       - if: steps.train.outputs.ship == 'true'
-        uses: peter-evans/create-pull-request@v7
+        uses: peter-evans/create-pull-request@v8
         with:
           branch: retrain/weekly
           title: 'chore: weekly retrain on opt-in feedback'
