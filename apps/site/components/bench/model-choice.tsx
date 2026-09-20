@@ -23,13 +23,15 @@ export type ModelFacts = Record<
 const NAME: Record<Model, string> = { standard: "Standard", sharper: "Sharper" }
 const DOWNLOAD = "125 MB"
 
+/** Loading has two halves, fetching and starting, and only the first is a download. */
+const fetching = (s: SharperState) =>
+  s.status === "loading" && !s.held && s.progress < 1
+
 function badge(s: SharperState): string | null {
   if (s.unfit) return "computer only"
   if (s.status === "on") return null
   if (s.status !== "loading") return s.held ? "held" : DOWNLOAD
-  return s.progress < 1 && !s.held
-    ? `${Math.round(s.progress * 100)}%`
-    : "starting"
+  return fetching(s) ? `${Math.round(s.progress * 100)}%` : "starting"
 }
 
 /** What is happening right now, in the phase where people otherwise wonder
@@ -44,13 +46,16 @@ function note(s: SharperState): string | null {
       : `Sharper can't run here. ${s.error?.message}.`
   }
   if (s.status !== "loading") return null
+  if (fetching(s)) {
+    return `Downloading the language model, ${Math.round(s.progress * 100)}% of ${DOWNLOAD}. It stays in this browser afterwards.`
+  }
   return s.held
     ? "Starting the language model. It's already in this browser, so nothing is being downloaded."
-    : `Downloading the language model, ${Math.round(s.progress * 100)}% of ${DOWNLOAD}. It stays in this browser afterwards.`
+    : "Downloaded. Starting the language model, which takes a few seconds."
 }
 
 function standing(s: SharperState): string {
-  if (s.status === "loading") return s.held ? "Starting" : "Downloading"
+  if (s.status === "loading") return fetching(s) ? "Downloading" : "Starting"
   if (s.status === "on") return "Language model running"
   if (s.status === "failed") return "Fell back to standard"
   return "Reads every paragraph"

@@ -9,6 +9,8 @@ import { fetchBin, loadScorer } from "./model"
 
 const REMEMBER = "slop-meter:sharper"
 const STARTING = "slop-meter:sharper-running"
+/** SmolLM2-135M in q4f16 with its tokenizer: what the first run fetches. */
+const DOWNLOAD_BYTES = 121_000_000
 const CACHE_LIMIT = 2000
 
 export type SharperState = {
@@ -49,11 +51,17 @@ class Connection {
     { resolve: (reply: Done) => void; reject: (error: LmError) => void }
   >()
   private nextId = 0
+  private furthest = 0
 
   constructor(onProgress: (share: number) => void) {
     this.worker.onmessage = ({ data }: MessageEvent<WorkerReply>) => {
       if (data.type === "progress") {
-        onProgress(data.total ? data.loaded / data.total : 0)
+        // The total only counts files whose download has begun, and the small ones
+        // finish before the 118 MB one is even announced: taken at face value that is
+        // 100%, then 6%. Measured against the known size, and never allowed to fall.
+        const share = data.loaded / Math.max(data.total, DOWNLOAD_BYTES)
+        this.furthest = Math.max(this.furthest, Math.min(share, 1))
+        onProgress(this.furthest)
         return
       }
       const call = this.pending.get(data.id)
@@ -118,36 +126,63 @@ const armed = {
   },
 }
 
+/** How long the page being left gets to say goodbye. Measured in Safari 27: a reload
+ *  hydrates the new page and reads storage before the old page's pagehide has run,
+ *  and that pagehide is visible here about 380 ms after navigation starts. Reading the
+ *  marker once, straight away, called every ordinary reload a crash. */
+const GOODBYE_MS = 1200
+
+let resuming = false
+let checking = false
+
 export function resume(): void {
   void held()
+  if (resuming) return
+  resuming = true
   try {
     if (tooSmall()) {
       remember(false)
       update({ unfit: true })
       return
     }
+    if (!localStorage.getItem(STARTING)) return again()
     // Without this the preference is a trap: the page dies, reloads, remembers that
     // sharper reading was on, starts it, and dies again, downloading 125 MB each lap
     // because a download the crash interrupted never reaches the cache.
-    if (localStorage.getItem(STARTING)) {
-      armed.clear()
-      remember(false)
-      update({
-        status: "failed",
-        error: {
-          message: "it didn't shut down cleanly last time, so it's off",
-          retry: true,
-        },
-      })
-      return
-    }
-    if (localStorage.getItem(REMEMBER) === "on") void turnOn()
+    setTimeout(() => {
+      try {
+        if (!localStorage.getItem(STARTING)) return again()
+        armed.clear()
+        remember(false)
+        update({
+          status: "failed",
+          error: {
+            message: "it didn't shut down cleanly last time, so it's off",
+            retry: true,
+          },
+        })
+      } catch {}
+    }, GOODBYE_MS)
   } catch {}
+}
+
+function again() {
+  if (localStorage.getItem(REMEMBER) === "on") void turnOn()
 }
 
 if (typeof window !== "undefined") {
   // A page that leaves normally is not a crash. pagehide doesn't fire for one that is.
   window.addEventListener("pagehide", armed.clear)
+  // Safari parks the page it leaves in the back-forward cache, model and all. Coming
+  // back to it, the marker pagehide removed has to go up again.
+  window.addEventListener("pageshow", (event) => {
+    if (!event.persisted) return
+    if (state.status === "on" || state.status === "loading") {
+      try {
+        armed.set()
+      } catch {}
+    }
+  })
 }
 
 /** transformers.js keeps model files in a Cache Storage bucket of its own, so the
@@ -164,7 +199,13 @@ async function held(): Promise<void> {
 
 export async function turnOn(): Promise<void> {
   if (state.status === "on" || state.status === "loading") return
-  if (state.unfit) return
+  if (state.unfit || checking) return
+  // Know whether this is a download or a start before saying which. Half a second of
+  // "Downloading, 0%" on every reload is how a cached model gets a reputation for
+  // downloading itself again.
+  checking = true
+  await held()
+  checking = false
   update({ status: "loading", progress: 0, error: null })
   remember(true)
   try {
