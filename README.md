@@ -70,7 +70,7 @@ node featurize-lm.ts && .venv/bin/python train.py --lm   # sharper model, about 
 - Labels come from provenance, not annotators. "Mixed" means model-polished or spliced text; human edits of model text are not in the corpus.
 - It says can't tell on most paragraphs: 9 in 10 held out, 98 in 100 on the web check. Sharper reading brings held out to about 3 in 4.
 - Weakest on model-polished human text, whose top guess is human 43% of the time, and on paraphrased machine text, a coin flip.
-- Formal human prose leans machine-ish. The Federal Reserve example on the site is the standing counterexample.
+- Institutional policy statements lean machine-ish. Across 2,788 Federal Register paragraphs, 13.8% lean machine and 0.3% are called machine-ish, so formal prose on its own is fine. The Federal Reserve statement on the site leans machine on 2 of its 3 paragraphs.
 - Text from current models mostly gets can't tell. Short posts and replies lean machine; long essays lean either way.
 - Text written as one element with blank lines between paragraphs is marked run by run, drawn in an overlay. Those lamps are the tab stop, since a run has no element of its own to focus.
 - Sharper reading needs WebGPU with 16-bit floats. The language model downloads once, about 120 MB, and adds roughly 800 MB to the tab while it runs.
