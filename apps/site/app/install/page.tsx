@@ -21,6 +21,7 @@ const falseMachinePer100 = Math.max(
 
 export const metadata: Metadata = {
   title: "Install",
+  alternates: { canonical: "/install" },
   description:
     "Add Slop Meter to Chrome. It marks each paragraph you read with the odds that a model wrote it, and scores on your device.",
 }

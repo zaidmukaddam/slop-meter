@@ -8,6 +8,7 @@ const measured = Object.keys(weights.rules).length
 
 export const metadata: Metadata = {
   title: "Rulebook",
+  alternates: { canonical: "/rules" },
   description: `The ${RULES.length} tells Slop Meter looks for, which way each one points, and how often it shows up in human and machine writing.`,
 }
 

@@ -1,4 +1,5 @@
 import manifest from "@slop/model/manifest.json"
+import type { Metadata } from "next"
 import Link from "next/link"
 import { connection } from "next/server"
 import { EngineCheck } from "@/components/bench/engine-check"
@@ -10,10 +11,45 @@ import { cn } from "@/lib/utils"
 
 const kilobytes = Math.round(manifest.bytes / 1024)
 
+export const metadata: Metadata = {
+  title: {
+    absolute: "Slop Meter: see which paragraphs read like a model wrote them",
+  },
+  alternates: { canonical: "/" },
+}
+
+const LINKED_DATA = {
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "WebSite",
+      name: "Slop Meter",
+      url: "https://slop-meter.com",
+      description:
+        "Marks each paragraph human-ish, machine-ish, mixed or can't tell, with the odds. The model runs in your browser.",
+    },
+    {
+      "@type": "SoftwareApplication",
+      name: "Slop Meter",
+      applicationCategory: "BrowserApplication",
+      operatingSystem: "Chrome",
+      url: "https://slop-meter.com/install",
+      image: "https://slop-meter.com/opengraph-image.png",
+      description:
+        "A Chrome extension that marks each paragraph on a page human-ish, machine-ish, mixed or can't tell. It scores on your device and sends no text anywhere.",
+      offers: { "@type": "Offer", price: "0", priceCurrency: "USD" },
+    },
+  ],
+}
+
 export default async function Home() {
   await connection()
   return (
     <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(LINKED_DATA) }}
+      />
       <PageIntro
         title={
           <>

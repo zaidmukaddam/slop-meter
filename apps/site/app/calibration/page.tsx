@@ -22,6 +22,7 @@ const WEB_FIGURES = [
 
 export const metadata: Metadata = {
   title: "Calibration",
+  alternates: { canonical: "/calibration" },
   description: `How often Slop Meter is right, measured on ${integer(REPORT.model.test.n)} held-out paragraphs and on web pages from sites it never trained on, including where it does worst.`,
 }
 
