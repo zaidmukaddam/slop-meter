@@ -24,6 +24,7 @@ const NAME: Record<Model, string> = { standard: "Standard", sharper: "Sharper" }
 const DOWNLOAD = "125 MB"
 
 function badge(s: SharperState): string | null {
+  if (s.unfit) return "computer only"
   if (s.status === "on") return null
   if (s.status !== "loading") return s.held ? "held" : DOWNLOAD
   return s.progress < 1 && !s.held
@@ -34,6 +35,9 @@ function badge(s: SharperState): string | null {
 /** What is happening right now, in the phase where people otherwise wonder
  *  whether it is downloading 125 MB all over again. It isn't. */
 function note(s: SharperState): string | null {
+  if (s.unfit) {
+    return "Sharper reading keeps about 800 MB in memory, more than a phone or tablet gives one tab. It's there on a computer."
+  }
   if (s.status === "failed") {
     return s.error?.retry
       ? `Sharper couldn't start: ${s.error.message}. Choose it to try again.`
@@ -93,6 +97,7 @@ export function ModelChoice({
         <ToggleGroupItem
           key={id}
           value={id}
+          disabled={id === "sharper" && sharper.unfit}
           title={
             id === "standard"
               ? undefined
@@ -104,7 +109,8 @@ export function ModelChoice({
             "gap-1.5 rounded-full border border-hairline data-pressed:border-ink data-pressed:bg-transparent",
             variant === "panel" && "h-9 flex-1 px-4 text-sm",
             variant === "bar" && "h-8 px-3.5 text-[13px]",
-            variant === "inline" && "h-7 px-3 text-[13px]"
+            variant === "inline" &&
+              "h-7 px-3 text-[13px] pointer-coarse:h-10 pointer-coarse:px-4"
           )}
         >
           {NAME[id]}

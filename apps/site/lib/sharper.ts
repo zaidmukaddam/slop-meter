@@ -8,6 +8,7 @@ import type { WorkerCall, WorkerReply } from "./lm-worker"
 import { fetchBin, loadScorer } from "./model"
 
 const REMEMBER = "slop-meter:sharper"
+const STARTING = "slop-meter:sharper-running"
 const CACHE_LIMIT = 2000
 
 export type SharperState = {
@@ -19,6 +20,8 @@ export type SharperState = {
   /** Whether the language model is already in this browser's cache, so turning
    *  sharper reading on costs a load rather than a download. */
   held: boolean
+  /** This device can't carry it, so it isn't offered: see tooSmall. */
+  unfit: boolean
 }
 
 const OFF: SharperState = {
@@ -28,6 +31,7 @@ const OFF: SharperState = {
   error: null,
   ready: 0,
   held: false,
+  unfit: false,
 }
 let state = OFF
 const listeners = new Set<() => void>()
@@ -89,11 +93,61 @@ function remember(on: boolean) {
   } catch {}
 }
 
+/** Sharper reading keeps about 800 MB in the tab. A phone or tablet gives one tab a
+ *  fraction of that, and the browser's answer to running out is to kill the page. No API
+ *  reports the ceiling on Safari, so this goes by the kind of device: touch first, no
+ *  hover. Chrome does report memory, and under 4 GB is the same story. */
+function tooSmall(): boolean {
+  const memory = (navigator as { deviceMemory?: number }).deviceMemory
+  return (
+    (memory !== undefined && memory < 4) ||
+    matchMedia("(pointer: coarse) and (hover: none)").matches
+  )
+}
+
+/** Set for as long as the language model is running, cleared when it is turned off or
+ *  the page leaves normally. Finding it on arrival means the tab went down with the
+ *  model in it. Held the whole time and not just during start-up, because the memory
+ *  peak comes with the first big batch, not with loading. */
+const armed = {
+  set: () => localStorage.setItem(STARTING, "1"),
+  clear: () => {
+    try {
+      localStorage.removeItem(STARTING)
+    } catch {}
+  },
+}
+
 export function resume(): void {
   void held()
   try {
+    if (tooSmall()) {
+      remember(false)
+      update({ unfit: true })
+      return
+    }
+    // Without this the preference is a trap: the page dies, reloads, remembers that
+    // sharper reading was on, starts it, and dies again, downloading 125 MB each lap
+    // because a download the crash interrupted never reaches the cache.
+    if (localStorage.getItem(STARTING)) {
+      armed.clear()
+      remember(false)
+      update({
+        status: "failed",
+        error: {
+          message: "it didn't shut down cleanly last time, so it's off",
+          retry: true,
+        },
+      })
+      return
+    }
     if (localStorage.getItem(REMEMBER) === "on") void turnOn()
   } catch {}
+}
+
+if (typeof window !== "undefined") {
+  // A page that leaves normally is not a crash. pagehide doesn't fire for one that is.
+  window.addEventListener("pagehide", armed.clear)
 }
 
 /** transformers.js keeps model files in a Cache Storage bucket of its own, so the
@@ -110,8 +164,15 @@ async function held(): Promise<void> {
 
 export async function turnOn(): Promise<void> {
   if (state.status === "on" || state.status === "loading") return
+  if (state.unfit) return
   update({ status: "loading", progress: 0, error: null })
   remember(true)
+  try {
+    armed.set()
+    // Asks the browser not to evict the 125 MB it is about to keep. Safari decides
+    // from how the site is used and may say no, which costs nothing.
+    void navigator.storage?.persist?.()
+  } catch {}
   const lm = new Connection((progress) => update({ progress }))
   connection = lm
   try {
@@ -131,11 +192,13 @@ export async function turnOn(): Promise<void> {
 
 export function turnOff(): void {
   remember(false)
+  armed.clear()
   stop()
   update({ status: "off", progress: 0, error: null })
 }
 
 function fail(error: unknown) {
+  armed.clear()
   stop()
   const lmError = isLmError(error) ? error : toLmError(error)
   update({ status: "failed", error: lmError })
