@@ -10,6 +10,7 @@ import {
   englishShare,
   extract,
   segment,
+  segmentSpans,
 } from "../src/index.ts"
 import { parse } from "../src/text.ts"
 
@@ -138,6 +139,18 @@ test("English prose clears the language gate and its neighbours don't", () => {
     assert.ok(englishShare(text) < ENGLISH_MIN_SHARE, text.slice(0, 20))
     assert.equal(extract(text).english, false)
   }
+})
+
+test("segmentSpans points at exactly what segment returns", () => {
+  const text =
+    "\n\n  First one here.  \n\n\n---\n\nSecond, after a rule.\nStill the second.\n \n\t\nThird."
+  const spans = segmentSpans(text)
+  assert.deepEqual(
+    spans.map(([start, end]) => text.slice(start, end)),
+    segment(text)
+  )
+  assert.equal(spans.length, 3)
+  assert.deepEqual(segmentSpans(""), [])
 })
 
 test("curly apostrophes match like straight ones, and still count as curly quotes", () => {

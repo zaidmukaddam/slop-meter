@@ -49,9 +49,29 @@ export function englishShare(text: string | Word[]): number {
 }
 
 export function segment(text: string): string[] {
-  return text
-    .replace(/\r\n?/g, "\n")
-    .split(/\n\s*\n/)
-    .map((s) => s.trim())
-    .filter((s) => /[A-Za-z]/.test(s))
+  const normal = text.replace(/\r\n?/g, "\n")
+  return segmentSpans(normal).map(([start, end]) => normal.slice(start, end))
+}
+
+/** Where each paragraph sits in the text: the same rule as `segment`, kept as offsets
+ *  for anything that has to draw on the text and not just read it. Expects "\n" line
+ *  ends, which is what a textarea's value always has. */
+export function segmentSpans(text: string): Span[] {
+  const spans: Span[] = []
+  const breaks = /\n\s*\n/g
+  let from = 0
+  const take = (to: number) => {
+    const chunk = text.slice(from, to)
+    const trimmed = chunk.trim()
+    if (/[A-Za-z]/.test(trimmed)) {
+      const start = from + chunk.indexOf(trimmed)
+      spans.push([start, start + trimmed.length])
+    }
+  }
+  for (const match of text.matchAll(breaks)) {
+    take(match.index)
+    from = match.index + match[0].length
+  }
+  take(text.length)
+  return spans
 }

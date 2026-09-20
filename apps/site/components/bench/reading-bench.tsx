@@ -5,7 +5,13 @@ import { explain, isRead } from "@slop/model"
 import { tellSpans } from "@slop/rules/names"
 import { rise } from "cube-motion"
 import { parseAsStringLiteral, useQueryState } from "nuqs"
-import { useEffect, useLayoutEffect, useRef, useState } from "react"
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from "react"
 import { Dial } from "@/components/meter/dial"
 import { Readout, ReadoutLine } from "@/components/meter/readout"
 import { Button } from "@/components/ui/button"
@@ -36,7 +42,8 @@ export function ReadingBench({ models }: { models: ModelFacts }) {
   const sharper = useSharper()
   const [textId, setTextId] = useQueryState("text", textParam)
   const [ownText, setOwnText] = useState("")
-  const [editing, setEditing] = useState(true)
+  const [settled, setSettled] = useState("")
+  const [caret, setCaret] = useState<number | null>(null)
   const [reading, setReading] = useState<number | null>(null)
   const [pointed, setPointed] = useState<number | null>(null)
   const [pinned, setPinned] = useState(false)
@@ -48,23 +55,29 @@ export function ReadingBench({ models }: { models: ModelFacts }) {
   const headRef = useRef<HTMLDivElement>(null)
   const railRef = useRef<HTMLDivElement>(null)
   const paperRef = useRef<HTMLElement>(null)
-  const editorRef = useRef<HTMLDivElement>(null)
   const stripRef = useRef<HTMLDivElement>(null)
   const listRef = useRef<HTMLDivElement>(null)
   const elements = useRef(new Map<number, HTMLElement>())
+  const registerParagraph = useCallback(
+    (index: number, element: HTMLElement | null) => {
+      if (element) elements.current.set(index, element)
+      else elements.current.delete(index)
+    },
+    []
+  )
 
   const example = EXAMPLES.find((e) => e.id === textId)
-  const showEditor = !example && (editing || !ownText.trim())
-  const shown = useRef({ textId, editor: showEditor })
+  // Your own text is written in the reading view itself: there is no separate editor
+  // to switch into, so the only difference is what decides the paragraph in focus.
+  const own = !example
+  const shown = useRef(textId)
   const paragraphs = segment(example ? example.text : ownText)
   const scoreOf = (p: string) => scorer?.score(p, featuresFor(sharper, p))
   const scores = paragraphs.map(scoreOf)
   const scored = scores.flatMap((s, i) => (s && isRead(s) ? [i] : []))
-  const active = showEditor
-    ? scored.at(-1)
-    : [pointed, reading, scored[0]].find(
-        (i): i is number => i != null && scored.includes(i)
-      )
+  const active = (
+    own ? [caret, scored.at(-1)] : [pointed, reading, scored[0]]
+  ).find((i): i is number => i != null && scored.includes(i))
   const score = active === undefined ? undefined : scores[active]
   const reasons = score ? explain(score) : []
 
@@ -79,11 +92,20 @@ export function ReadingBench({ models }: { models: ModelFacts }) {
     }
   }
 
+  // The language model reads a paragraph in tens of milliseconds, and every keystroke
+  // makes a paragraph it has never seen. It gets your text once you pause.
+  useEffect(() => {
+    const timer = setTimeout(() => setSettled(ownText), 800)
+    return () => clearTimeout(timer)
+  }, [ownText])
+
   useEffect(() => {
     if (sharper.status !== "on") return
-    const onShow = showEditor ? [] : segment(example ? example.text : ownText)
-    request([...EXAMPLE_PARAGRAPHS, ...onShow])
-  }, [sharper.status, showEditor, example, ownText])
+    request([
+      ...EXAMPLE_PARAGRAPHS,
+      ...segment(example ? example.text : settled),
+    ])
+  }, [sharper.status, example, settled])
 
   // The number only exists once there is a reading, so that is when to measure again.
   const hasReading = score !== undefined
@@ -160,7 +182,7 @@ export function ReadingBench({ models }: { models: ModelFacts }) {
     )
     for (const element of elements.current.values()) observer.observe(element)
     return () => observer.disconnect()
-  }, [textId, paragraphs.length, showEditor])
+  }, [textId, paragraphs.length])
 
   useLayoutEffect(() => {
     const list = listRef.current
@@ -180,24 +202,21 @@ export function ReadingBench({ models }: { models: ModelFacts }) {
     observer.observe(list)
     observer.observe(strip)
     return () => observer.disconnect()
-  }, [textId, paragraphs.length, showEditor, scorer])
+  }, [textId, paragraphs.length, scorer])
 
   useLayoutEffect(() => {
-    if (shown.current.textId === textId && shown.current.editor === showEditor)
-      return
-    shown.current = { textId, editor: showEditor }
+    if (shown.current === textId) return
+    shown.current = textId
     if (listRef.current) rise(listRef.current, { targets: "children" })
-    else if (editorRef.current) rise(editorRef.current)
-  }, [textId, showEditor])
+  }, [textId])
 
   useEffect(() => {
-    const element =
-      active === undefined || showEditor
-        ? null
-        : (elements.current.get(active)?.querySelector("p") ?? null)
+    // A read paragraph keeps its text in a <p>. One you are writing is the element itself.
+    const holder = active === undefined ? null : elements.current.get(active)
+    const element = holder?.querySelector("p") ?? holder ?? null
     highlightSpans(element, reasons.flatMap(tellSpans))
     return () => highlightSpans(null, [])
-  }, [active, reasons, showEditor])
+  }, [active, reasons])
 
   function chooseText(id: string) {
     setTextId(id)
@@ -227,12 +246,13 @@ export function ReadingBench({ models }: { models: ModelFacts }) {
 
   const caption =
     score && active !== undefined
-      ? `${showEditor ? "Your draft" : `¶ ${active + 1} of ${paragraphs.length}`} · ${score.words} words`
+      ? `¶ ${active + 1} of ${paragraphs.length} · ${score.words} words`
       : ""
 
   return (
     <div
-      className="bench relative"
+      id="bench"
+      className="bench relative scroll-mt-0"
       style={
         {
           "--reading-line": `${READING_LINE}dvh`,
@@ -343,10 +363,7 @@ export function ReadingBench({ models }: { models: ModelFacts }) {
           <header className="mb-6 grid grid-cols-[2rem_minmax(0,1fr)] gap-x-3 border-b border-hairline pb-5 sm:grid-cols-[4rem_minmax(0,1fr)] sm:gap-x-6">
             <p
               aria-hidden
-              className={cn(
-                "flex items-end justify-between self-end font-mono text-[10px] text-graphite",
-                showEditor && "invisible"
-              )}
+              className="flex items-end justify-between self-end font-mono text-[10px] text-graphite"
             >
               <span className="text-human">0</span>
               <span className="max-sm:hidden">50</span>
@@ -357,52 +374,31 @@ export function ReadingBench({ models }: { models: ModelFacts }) {
                 <p className="max-w-md font-mono text-[11px] leading-5 text-pretty text-graphite">
                   {example
                     ? example.source
-                    : showEditor
-                      ? "Your text stays in this tab. Leave a blank line between paragraphs."
-                      : "Your text. It stays in this tab."}
+                    : "Your text. It is read in this tab and the draft is kept in this browser, nowhere else. Leave a blank line between paragraphs."}
                 </p>
-                {!showEditor && <Distribution scores={scores} />}
+                <Distribution scores={scores} />
               </div>
-              <div className="self-end">
-                {example ? (
-                  <p className="hidden font-mono text-[11px] leading-5 text-pretty text-graphite lg:block">
-                    The needle reads the paragraph at the arrow. Hover or tab to
-                    another paragraph to read that one.
-                  </p>
-                ) : (
-                  !showEditor && (
-                    <Button
-                      variant="outline"
-                      onClick={() => setEditing(true)}
-                      className="h-8 rounded-full border-hairline bg-transparent px-3.5 text-[13px]"
-                    >
-                      Edit text
-                    </Button>
-                  )
-                )}
-              </div>
+              <p className="hidden self-end font-mono text-[11px] leading-5 text-pretty text-graphite lg:block">
+                {example
+                  ? "The needle reads the paragraph at the arrow. Hover or tab to another paragraph to read that one."
+                  : "The needle follows the paragraph you are writing in. What pushed it is listed here, and marked in your text."}
+              </p>
             </div>
           </header>
 
-          {showEditor ? (
-            <div ref={editorRef}>
-              <OwnTextEditor
-                value={ownText}
-                onChange={setOwnText}
-                onRead={() => setEditing(false)}
-              />
-            </div>
-          ) : (
-            <div className="grid grid-cols-[2rem_minmax(0,1fr)] gap-x-3 sm:grid-cols-[4rem_minmax(0,1fr)] sm:gap-x-6">
-              <div ref={stripRef} className="relative">
-                <div className="absolute inset-0">
-                  <Trace
-                    points={trace}
-                    width={geometry.strip}
-                    height={geometry.height}
-                    active={active}
-                  />
-                </div>
+          <div className="grid grid-cols-[2rem_minmax(0,1fr)] gap-x-3 sm:grid-cols-[4rem_minmax(0,1fr)] sm:gap-x-6">
+            <div ref={stripRef} className="relative">
+              <div className="absolute inset-0">
+                <Trace
+                  points={trace}
+                  width={geometry.strip}
+                  height={geometry.height}
+                  active={active}
+                />
+              </div>
+              {/* The arrow marks the paragraph the scroll has reached. Your own text
+                  is followed by the caret, so it has no use for one. */}
+              {!own && (
                 <div
                   aria-hidden
                   className="pointer-events-none sticky top-(--reading-line) z-10 h-0"
@@ -410,14 +406,26 @@ export function ReadingBench({ models }: { models: ModelFacts }) {
                   <span className="absolute -left-3 block size-0 -translate-y-1/2 border-y-[5px] border-l-[6px] border-y-transparent border-l-ink sm:-left-5" />
                   <span className="absolute inset-x-0 border-t border-dashed border-ink/40" />
                 </div>
-              </div>
-              <div
-                ref={listRef}
-                role="list"
-                aria-label="Paragraphs"
-                className="relative"
-              >
-                {paragraphs.map((text, i) => (
+              )}
+            </div>
+            <div
+              ref={listRef}
+              role={own ? undefined : "list"}
+              aria-label={own ? undefined : "Paragraphs"}
+              className="relative"
+            >
+              {own ? (
+                <OwnTextEditor
+                  value={ownText}
+                  onChange={setOwnText}
+                  scores={scores}
+                  active={active}
+                  minWords={scorer?.manifest.minWords ?? 25}
+                  register={registerParagraph}
+                  onCaret={setCaret}
+                />
+              ) : (
+                paragraphs.map((text, i) => (
                   <SpecimenParagraph
                     key={`${textId}-${i}`}
                     index={i}
@@ -425,10 +433,7 @@ export function ReadingBench({ models }: { models: ModelFacts }) {
                     score={scores[i]}
                     active={i === active}
                     dimmed={active !== undefined && i !== active}
-                    register={(element) => {
-                      if (element) elements.current.set(i, element)
-                      else elements.current.delete(i)
-                    }}
+                    register={(element) => registerParagraph(i, element)}
                     onPoint={(on) =>
                       setPointed((current) => {
                         if (on) return i
@@ -436,18 +441,18 @@ export function ReadingBench({ models }: { models: ModelFacts }) {
                       })
                     }
                   />
-                ))}
-                {score && active !== undefined && geometry.rows[active] && (
-                  <MarginNotes
-                    key={`${textId}-${active}`}
-                    reasons={reasons}
-                    top={geometry.rows[active].top}
-                    className="max-lg:sr-only lg:left-[calc(var(--measure)+2.5rem)]"
-                  />
-                )}
-              </div>
+                ))
+              )}
+              {score && active !== undefined && geometry.rows[active] && (
+                <MarginNotes
+                  key={`${textId}-${active}`}
+                  reasons={reasons}
+                  top={geometry.rows[active].top}
+                  className="max-lg:sr-only lg:left-[calc(var(--measure)+2.5rem)]"
+                />
+              )}
             </div>
-          )}
+          </div>
         </article>
       </div>
     </div>
