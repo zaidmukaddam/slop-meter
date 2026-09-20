@@ -1,6 +1,7 @@
 {
   "name": "slop-meter",
   "private": true,
+  "license": "AGPL-3.0-only",
   "type": "module",
   "scripts": {
     "rules": "node packages/rules/validate.ts",

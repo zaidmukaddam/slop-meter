@@ -24,10 +24,25 @@ const sourceSerif = Source_Serif_4({
   axes: ["opsz"],
 })
 
+const DESCRIPTION =
+  "Marks each paragraph human-ish, machine-ish or mixed, with the odds. The model runs in your browser."
+
 export const metadata: Metadata = {
+  metadataBase: new URL("https://slop-meter.com"),
   title: { default: "Slop Meter", template: "%s · Slop Meter" },
-  description:
-    "Marks each paragraph human-ish, machine-ish or mixed, with the odds. The model runs in your browser.",
+  description: DESCRIPTION,
+  openGraph: {
+    type: "website",
+    siteName: "Slop Meter",
+    url: "/",
+    title: "Slop Meter",
+    description: DESCRIPTION,
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Slop Meter",
+    description: DESCRIPTION,
+  },
 }
 
 export const viewport: Viewport = {
