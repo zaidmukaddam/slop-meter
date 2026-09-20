@@ -3,9 +3,11 @@ import assert from "node:assert/strict"
 import { readFileSync } from "node:fs"
 import { RULES } from "@slop/rules"
 import {
+  ENGLISH_MIN_SHARE,
   FEATURE_DIM,
   FEATURE_NAMES,
   RULE_FEATURE_IDS,
+  englishShare,
   extract,
   segment,
 } from "../src/index.ts"
@@ -91,10 +93,10 @@ test("labeled set: machine paragraphs carry more tells than human ones, and extr
     load("machine") > load("human"),
     `machine ${load("machine")} vs human ${load("human")}`
   )
-  assert.ok(
-    mean("human", "r-034") < mean("machine", "r-034"),
-    "absence of voice is higher for machine text"
-  )
+  // No claim about r-034, absence of voice, on its own. Across the whole test split it
+  // runs higher for people (0.385 against 0.344 over 10,602 paragraphs), because
+  // encyclopedias, abstracts and news are voiceless on purpose. It earns its keep beside
+  // other rules, which is a job for the model's weights and not for a mean.
   const t0 = performance.now()
   for (const r of rows) extract(r.text)
   assert.ok(
@@ -118,6 +120,24 @@ test("segment", () => {
     "two",
     "three",
   ])
+})
+
+test("English prose clears the language gate and its neighbours don't", () => {
+  const english =
+    "The plan is simple enough that we can say it in one line, and the rest " +
+    "of this page is about what it would cost if we were wrong about that."
+  assert.ok(englishShare(english) > 0.25)
+  assert.equal(extract(english).english, true)
+
+  const others = [
+    "Le plan est assez simple pour tenir en une ligne, et le reste de cette page parle du prix a payer si nous nous trompons sur ce point precis.",
+    "El plan es lo bastante sencillo como para decirlo en una linea, y el resto de esta pagina trata de lo que costaria si nos equivocamos.",
+    "Der Plan ist einfach genug, um ihn in einer Zeile zu sagen, und der Rest dieser Seite handelt davon, was es kosten wuerde, wenn wir uns irren.",
+  ]
+  for (const text of others) {
+    assert.ok(englishShare(text) < ENGLISH_MIN_SHARE, text.slice(0, 20))
+    assert.equal(extract(text).english, false)
+  }
 })
 
 test("curly apostrophes match like straight ones, and still count as curly quotes", () => {

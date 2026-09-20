@@ -1,12 +1,14 @@
 """Build the paragraph corpus, the generation seeds, and the M0 eval set.
 
-Human:   RAID human docs (abstracts, books, news, poetry), Reddit tldr-17 (2006-2016),
+Human:   RAID human docs (all eight domains), Reddit tldr-17 (2006-2016),
          Yelp reviews, English Wikipedia.
 Machine: RAID generations (11 older models), WildChat (GPT-3.5/GPT-4 replies to real
          users, 2023-24), Magpie (Llama 3.1 70B), and data/gen.jsonl from generate.ts.
 Mixed:   RAID human/machine splices and model-polished human paragraphs (gen.jsonl).
-Adversarial (held out entirely): RAID paraphrase attacks, anti-tell text from holdout models.
-Web (held out entirely): C4 paragraphs from the April 2019 crawl, as a browser renders them.
+Adversarial: anti-tell text from holdout models, held out entirely, and the RAID paraphrase
+         attacks whose source document falls in the test bucket. The other paraphrases train.
+Web (held out entirely): C4 paragraphs from all eight shards of the April 2019 crawl, as a
+         browser renders them.
 
 Writes data/corpus.jsonl rows {text, label, source, domain, model, group, split, modern},
 data/seeds.jsonl and ../eval/labeled.jsonl.
@@ -31,8 +33,9 @@ PER_DOC = 2
 MAX_SPLICES = 1200
 PUBLIC_MACHINE_PER_SOURCE = 3000
 EVAL_QUOTA = {"human": 90, "machine": 70, "mixed": 40}
-WEB_EVAL = 3000
+WEB_EVAL = 24000
 C4_TRAIN_PAGES = 3000
+PER_SHARD = 6000
 
 SENTENCE_BREAK = re.compile(r"(?<=[.!?])\s+")
 CODE = re.compile(r'```|^\s{4}\S|[{};]\s*$|^\s*"[^"\n]{1,60}"\s*:', re.MULTILINE)
@@ -112,16 +115,22 @@ def add_raid(corpus: Corpus) -> tuple[pd.DataFrame, pd.DataFrame]:
 
     clean = raid[(raid.model != "human") & (raid.attack == "none") & raid.decoding.isin(["greedy", "sampling"])]
     for (domain, model), group in clean.groupby(["domain", "model"]):
-        sample = group.sample(min(len(group), 40 if domain == "poetry" else 160), random_state=2)
+        # Per domain and model, halved when the corpus grew from four RAID domains to eight.
+        # These are 2023-era models: left at the old rate they doubled their share of the
+        # machine class and the meter got worse at the text current models write.
+        sample = group.sample(min(len(group), 20 if domain == "poetry" else 80), random_state=2)
         for r in sample.itertuples():
             corpus.append(r.generation, label="machine", source="raid", domain=domain, model=model, group=r.source_id)
 
     paraphrased = raid[(raid.model != "human") & (raid.attack == "paraphrase")]
     for (domain, model), group in paraphrased.groupby(["domain", "model"]):
         for r in group.sample(min(len(group), 20), random_state=3).itertuples():
+            # Paraphrase used to be held out whole, which left the model to meet its first
+            # paraphrase in the wild. Source documents in the test bucket stay held out and
+            # keep the adversarial report honest; the rest train like any other machine text.
             corpus.append(
                 r.generation,
-                split="adv",
+                split="adv" if split_for(r.source_id) == "test" else None,
                 label="machine",
                 source="raid-paraphrase",
                 domain=domain,
@@ -251,16 +260,20 @@ def add_generations(corpus: Corpus) -> int:
     return added
 
 def add_c4(corpus: Corpus) -> list[dict]:
-    """Web pages from before chatbots: C4 (April 2019 crawl) keeps one line per rendered block. The first
-    pages of a fixed shuffle are the web check: human rows at natural length, never trained on. Pages from
-    other sites train like any human source and each seeds a machine paragraph for the same page, so the
-    register of shop pages, blogs and notices can't stand in for the label."""
-    path = DATA / "web/c4-validation.00000-of-00008.json.gz"
-    if not path.exists():
+    """Web pages from before chatbots: C4 (April 2019 crawl) keeps one line per rendered block. All eight
+    validation shards are read, a fixed sample of each, so the check isn't one crawl slice of the web. The
+    first pages of a fixed shuffle are the web check: human rows at natural length, never trained on. Pages
+    from other sites train like any human source and each seeds a machine paragraph for the same page, so
+    the register of shop pages, blogs and notices can't stand in for the label."""
+    paths = sorted((DATA / "web").glob("c4-validation.*.json.gz"))
+    if not paths:
         return []
     rng = random.Random(19)
-    with gzip.open(path, "rt") as f:
-        docs = [json.loads(line) for line in f]
+    docs = []
+    for path in paths:
+        with gzip.open(path, "rt") as f:
+            shard = [json.loads(line) for line in f]
+        docs += rng.sample(shard, min(len(shard), PER_SHARD))
     rng.shuffle(docs)
     added = stop = 0
     for stop, doc in enumerate(docs, 1):

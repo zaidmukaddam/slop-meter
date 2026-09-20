@@ -35,7 +35,13 @@ HIDDEN = (224, 64)
 MODERN_WEIGHTS = (1.0, 2.0, 4.0)
 ECE_TARGET = 0.05
 TAU_ACCURACY_TARGET = 0.96
-FALSE_MACHINE_CAP = 0.025
+# The bar chooser buys a lower can't-tell rate with human paragraphs called machine-ish,
+# so this cap is the promise each model makes, not a loose sanity check. At 0.025 a richer
+# corpus simply bought chattiness: web false-machine tripled while val stayed "within cap".
+# Sharper reading answers three times as often, so it cannot hold the base model's cap and
+# still clear the accuracy target; its own cap is set at what it already shipped.
+FALSE_MACHINE_CAP = 0.001
+FALSE_MACHINE_CAP_LM = 0.002
 TAU_GRID = np.round(np.arange(0.34, 0.99, 0.01), 2)
 MIN_WORDS = 25
 RULE_FIRED = 0.05
@@ -319,7 +325,13 @@ def train_candidate(d: Dataset, seed: int, labels: dict, words: dict) -> dict:
     quantized = [quantize(w, b) for w, b in layers]
     probs = lambda split: softmax(run_quantized(quantized, d.Z[d.idx[split]]))
     bars = choose_thresholds(probs("val"), words["val"], labels["val"])
-    at_bars = lambda split: outcome(probs(split), words[split], labels[split], *bars) if bars else None
+    at_bars = (
+        lambda split: outcome(
+            probs(split), words[split], labels[split], *bars, modern=d.modern[d.idx[split]]
+        )
+        if bars
+        else None
+    )
     return {
         "seed": seed,
         "mlp": mlp,
@@ -357,16 +369,28 @@ def decided(probs: np.ndarray, words: np.ndarray, tau: float, tau_machine: float
     bar = np.where(probs.argmax(1) == MACHINE, tau_machine, tau)
     return (words >= MIN_WORDS) & (probs.max(1) >= bar)
 
-def outcome(probs: np.ndarray, words: np.ndarray, labels: np.ndarray, tau: float, tau_machine: float) -> dict:
+def outcome(
+    probs: np.ndarray,
+    words: np.ndarray,
+    labels: np.ndarray,
+    tau: float,
+    tau_machine: float,
+    modern: np.ndarray | None = None,
+) -> dict:
     """What the meter says at these bars."""
     predicted = probs.argmax(1)
     called = decided(probs, words, tau, tau_machine)
     mixed_calls = called & (predicted == 2)
+    caught = (predicted == MACHINE) & called
+    modern_machine = (labels == MACHINE) if modern is None else (labels == MACHINE) & modern
     return {
         "unsureRate": float(1 - called.mean()),
         "accuracyDecided": float((predicted[called] == labels[called]).mean()) if called.any() else None,
-        "falseMachineRateOnHuman": float(((predicted == MACHINE) & called)[labels == HUMAN].mean()),
+        "falseMachineRateOnHuman": float(caught[labels == HUMAN].mean()),
         "mixedPrecision": float((labels[mixed_calls] == 2).mean()) if mixed_calls.any() else None,
+        # What the bars are for: catching machine text, and above all the text current
+        # models write. Seed selection ranks on this, inside the false-machine cap.
+        "modernMachineCaught": float(caught[modern_machine].mean()) if modern_machine.any() else 0.0,
         "decided": int(called.sum()),
     }
 
@@ -527,7 +551,7 @@ def main() -> None:
         "--ablate", help="comma-separated features to zero out; writes eval/ablation-<ids>.json and ships nothing"
     )
     parser.add_argument(
-        "--seeds", type=int, default=5, help="train this many seeds; the one with the fewest false machine calls on val ships"
+        "--seeds", type=int, default=5, help="train this many seeds; the one catching the most current-model text on val, within the false-machine cap, ships"
     )
     args = parser.parse_args()
     if args.lm and args.feedback:
@@ -538,6 +562,9 @@ def main() -> None:
         parser.error("--ablate measures a feature against the shipped recipe: leave out --feedback")
 
     lm = json.loads((DATA / "lm.json").read_text()) if args.lm else None
+    if lm:
+        global FALSE_MACHINE_CAP
+        FALSE_MACHINE_CAP = FALSE_MACHINE_CAP_LM
     out, report_path, suffix = (
         (WEIGHTS / "lm", ROOT / "eval/report-lm.json", "-lm") if lm else (WEIGHTS, ROOT / "eval/report.json", "")
     )
@@ -576,9 +603,12 @@ def main() -> None:
 
     started = time.time()
     tried = [train_candidate(d, seed, labels, words) for seed in range(args.seeds)]
-    chosen = min(
+    # Every candidate with bars already holds the false-machine cap, so ranking them by
+    # timidity again picked the seed that says least. Rank by what the meter is for:
+    # paragraphs from current models that it actually calls.
+    chosen = max(
         (c for c in tried if c["bars"]),
-        key=lambda c: (c["val"]["falseMachineRateOnHuman"], c["val"]["unsureRate"]),
+        key=lambda c: (c["val"]["modernMachineCaught"], -c["val"]["falseMachineRateOnHuman"]),
         default=tried[0],
     )
     mlp, modern_weight, scale, shift, quantized, bars = (
