@@ -1,1 +1,1 @@
-Slop Meter: four answers per paragraph, with the odds, from a model that runs in your browser.
+Slop Meter reading a paragraph: the tells that pushed it are marked, the gauge needle sits at 98, and the readout says 98% sure it's machine-ish.

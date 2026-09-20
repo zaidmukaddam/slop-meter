@@ -1,4 +1,7 @@
-<img src="apps/site/app/opengraph-image.png" alt="Slop Meter" width="100%">
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset=".github/assets/readme-dark.png">
+  <img src=".github/assets/readme-light.png" alt="Slop Meter: four gauges, one for each answer it gives a paragraph: human-ish, mixed, can't tell and machine-ish." width="100%">
+</picture>
 
 # Slop Meter
 
