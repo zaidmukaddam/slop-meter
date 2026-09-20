@@ -18,6 +18,7 @@ import {
   waitForMarks,
 } from "./browser.ts"
 import {
+  BREAKS_PARAGRAPHS,
   HUMAN,
   LONG_PAGE_PARAGRAPHS,
   MACHINE,
@@ -82,6 +83,7 @@ await checkPopup(context, page)
 await checkRewrite(page)
 await checkSelection(page, worker)
 await checkThread(context)
+await checkLineBreaks(context)
 await checkSitePolicy(context, page, worker)
 await context.close()
 await checkJank()
@@ -366,6 +368,42 @@ async function checkThread(context: BrowserContext) {
     )
   check(read, "every comment of a thread without <main> gets marks")
   await thread.close()
+}
+
+async function checkLineBreaks(context: BrowserContext) {
+  const page = await context.newPage()
+  await page.goto(`${PAGES}/breaks`)
+  const bars = await page
+    .waitForFunction(
+      (n) => document.querySelectorAll("slop-marks slop-mark").length === n,
+      BREAKS_PARAGRAPHS.length,
+      { timeout: 10_000 }
+    )
+    .then(
+      () => true,
+      () => false
+    )
+  check(bars, "paragraphs split only by line breaks each get a mark")
+
+  const aligned = await page.evaluate(() => {
+    const font = document.querySelector("font")!
+    const left = font.getBoundingClientRect().left + scrollX
+    const bars = [...document.querySelectorAll("slop-marks slop-mark")]
+    const tops = bars.map((b) => parseFloat((b as HTMLElement).style.top))
+    return {
+      beside: bars.every(
+        (b) => Math.abs(parseFloat((b as HTMLElement).style.left) - left) < 12
+      ),
+      ordered: tops.every((t, i) => i === 0 || t > tops[i - 1]),
+      tall: bars.every((b) => parseFloat((b as HTMLElement).style.height) > 10),
+    }
+  })
+  check(aligned.beside, "each mark sits in the gutter beside its own text")
+  check(
+    aligned.ordered && aligned.tall,
+    "marks stack down the page, one per run"
+  )
+  await page.close()
 }
 
 async function checkSitePolicy(

@@ -95,6 +95,18 @@ export const THREAD_PAGE = `<!doctype html>
   </body>
 </html>`
 
+export const BREAKS_PARAGRAPHS = [MACHINE[0], HUMAN[0], MACHINE[1], HUMAN[1]]
+
+export const BREAKS_PAGE = `<!doctype html>
+<html>
+  <head><meta charset="utf-8" /><title>Breaks</title></head>
+  <body bgcolor="#ffffff">
+    <table><tr><td>
+      <font size="2" face="verdana">${BREAKS_PARAGRAPHS.join("<br /><br />")}</font>
+    </td></tr></table>
+  </body>
+</html>`
+
 export const LONG_PAGE_PARAGRAPHS = 200
 const SAMPLES = [...MACHINE, ...HUMAN]
 const NOTE_MULTIPLIER = 7919

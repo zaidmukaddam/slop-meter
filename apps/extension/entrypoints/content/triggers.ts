@@ -1,4 +1,5 @@
 import type { Card } from "./card"
+import { runRect } from "./extract"
 import { MARKED_SELECTOR } from "./marks"
 import type { Block } from "./scheduler"
 
@@ -18,7 +19,7 @@ export class CardTriggers {
 
   constructor(
     private card: Card,
-    private blockAt: (el: Element) => Block | undefined
+    private blockAt: (el: Element, y?: number) => Block | undefined
   ) {
     card.host.addEventListener("pointerenter", () => {
       this.overCard = true
@@ -82,10 +83,14 @@ export class CardTriggers {
 
   private blockInGutter(x: number, y: number): Block | null {
     const hit = document.elementFromPoint(x + PROBE_OFFSET_PX, y)
-    const el = hit?.closest(MARKED_SELECTOR)
-    const block = el ? this.blockAt(el) : undefined
+    if (!hit) return null
+    const el = hit.closest(MARKED_SELECTOR) ?? hit
+    const block = this.blockAt(el, y)
     if (!block?.score) return null
-    const edge = block.el.getBoundingClientRect().left
+    const edge = (
+      block.nodes ? runRect(block.nodes) : block.el.getBoundingClientRect()
+    )?.left
+    if (edge === undefined) return null
     const inZone =
       x >= edge - GUTTER_HIT_OUTSIDE_PX && x <= edge + GUTTER_HIT_INSIDE_PX
     return inZone ? block : null

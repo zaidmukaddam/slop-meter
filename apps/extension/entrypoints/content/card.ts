@@ -21,6 +21,7 @@ import {
   tooShortHtml,
 } from "./card-view"
 import { wordDiffHtml } from "./diff"
+import { runRect } from "./extract"
 import { clearHighlights, highlightReasons } from "./highlight"
 import { streamRewrite } from "./rewrite"
 import type { Block } from "./scheduler"
@@ -99,16 +100,14 @@ export class Card {
   open(block: Block, anchor: CardAnchor): void {
     const { score, text } = block
     if (!score || !text || !block.el.isConnected) return
+    const rect = () =>
+      (block.nodes && runRect(block.nodes)) ?? block.el.getBoundingClientRect()
     this.show(
-      {
-        rect: () => block.el.getBoundingClientRect(),
-        el: block.el,
-        reading: { text, score, block },
-      },
+      { rect, el: block.el, reading: { text, score, block } },
       anchor,
       false
     )
-    highlightReasons(block.el, text, this.reasons)
+    highlightReasons(block.el, text, this.reasons, block.nodes)
   }
 
   openSelection(range: Range, paragraphs: string[], scores: Score[]): void {

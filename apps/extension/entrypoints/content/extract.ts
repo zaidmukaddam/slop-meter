@@ -24,6 +24,7 @@ const BOLD_TAGS = new Set(["strong", "b"])
 
 const MAX_LINK_TEXT_SHARE = 0.5
 const MIN_CONTENT_CHARS = 80
+const BLANK_LINE_BREAKS = 2
 
 export function countWords(text: string): number {
   return text.match(/\S+/g)?.length ?? 0
@@ -53,6 +54,91 @@ function isContentBlock(el: HTMLElement, root: Element, minWords: number) {
   const text = el.textContent ?? ""
   if (countWords(text) < minWords) return false
   return linkTextLength(el) <= text.length * MAX_LINK_TEXT_SHARE
+}
+
+/**
+ * Text written as one element with blank lines between paragraphs, the way
+ * hand-written pages do it. The deepest such element wins, so a table wrapping
+ * the prose doesn't claim it too.
+ */
+export function findRunContainers(
+  minWords: number,
+  isTracked: (el: HTMLElement) => boolean
+): HTMLElement[] {
+  const candidates: HTMLElement[] = []
+  for (const root of contentRoots()) {
+    const seen = new Set<HTMLElement>()
+    for (const br of root.querySelectorAll("br")) {
+      const el = br.parentElement
+      if (!el || seen.has(el)) continue
+      seen.add(el)
+      if (!isTracked(el) && isRunContainer(el, root, minWords)) {
+        candidates.push(el)
+      }
+    }
+  }
+  return candidates.filter(
+    (el) => !candidates.some((other) => other !== el && el.contains(other))
+  )
+}
+
+function isRunContainer(el: HTMLElement, root: Element, minWords: number) {
+  const skipped = el.closest(SKIPPED_CONTAINERS)
+  if (skipped && root.contains(skipped)) return false
+  const text = el.textContent ?? ""
+  if (linkTextLength(el) > text.length * MAX_LINK_TEXT_SHARE) return false
+  return runsIn(el, minWords).length > 1
+}
+
+/** Runs long enough to score. Nested blocks are scored on their own, so they end a run. */
+export function runsIn(el: HTMLElement, minWords: number): Node[][] {
+  return splitRuns(el).filter(
+    (nodes) =>
+      countWords(nodes.map((node) => node.textContent ?? "").join(" ")) >=
+      minWords
+  )
+}
+
+function splitRuns(el: HTMLElement): Node[][] {
+  const runs: Node[][] = []
+  let run: Node[] = []
+  let breaks = 0
+  const end = () => {
+    if (run.length) runs.push(run)
+    run = []
+  }
+  for (const node of el.childNodes) {
+    if (node instanceof HTMLBRElement) {
+      if (++breaks >= BLANK_LINE_BREAKS) end()
+      continue
+    }
+    if (node instanceof Text && !node.data.trim()) continue
+    if (node instanceof Element && node.matches(BLOCK_LEVEL)) {
+      end()
+      breaks = 0
+      continue
+    }
+    breaks = 0
+    run.push(node)
+  }
+  end()
+  return runs
+}
+
+export function serializeRun(nodes: Node[]): SerializedBlock {
+  const builder = new TextBuilder()
+  for (const node of nodes) builder.appendNode(node)
+  builder.trimTrailingSpace()
+  return { text: builder.text, positions: builder.positions }
+}
+
+export function runRect(nodes: Node[]): DOMRect | null {
+  if (!nodes.length) return null
+  const range = document.createRange()
+  range.setStartBefore(nodes[0])
+  range.setEndAfter(nodes[nodes.length - 1])
+  const rect = range.getBoundingClientRect()
+  return rect.height ? rect : null
 }
 
 function linkTextLength(el: Element): number {
@@ -120,10 +206,12 @@ class TextBuilder {
   }
 
   appendChildren(parent: Node, insideBold: boolean) {
-    for (const child of parent.childNodes) {
-      if (child instanceof Text) this.appendText(child)
-      else if (child instanceof Element) this.appendElement(child, insideBold)
-    }
+    for (const child of parent.childNodes) this.appendNode(child, insideBold)
+  }
+
+  appendNode(node: Node, insideBold = false) {
+    if (node instanceof Text) this.appendText(node)
+    else if (node instanceof Element) this.appendElement(node, insideBold)
   }
 
   trimTrailingSpace() {

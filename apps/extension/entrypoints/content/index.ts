@@ -6,7 +6,7 @@ import { SUMMARY_PORT, type Summary, handle } from "../../shared/messages"
 import { loadScorer, manifest, sharpen } from "../../shared/model"
 import { getSettings, isSiteOn, onSettingsChanged } from "../../shared/settings"
 import { Card } from "./card"
-import { createPageStyle, markBlock, unmarkBlock } from "./marks"
+import { RunMarks, createPageStyle, markBlock, unmarkBlock } from "./marks"
 import { type Block, BlockScheduler } from "./scheduler"
 import { readSiteClass } from "./site"
 import { CardTriggers } from "./triggers"
@@ -29,8 +29,10 @@ export default defineContentScript({
       if (settings.lm) void sharpenBlocks(batch)
       pushSummary()
     })
+    const runMarks = new RunMarks()
     const card = new Card(readSiteClass(), () => settings)
-    const triggers = new CardTriggers(card, (el) => scheduler.get(el))
+    const triggers = new CardTriggers(card, (el, y) => scheduler.get(el, y))
+    const onResize = () => redrawRuns()
 
     async function getScorer(): Promise<Scorer> {
       loading ??= loadScorer()
@@ -44,15 +46,19 @@ export default defineContentScript({
       if (!running) return
       document.documentElement.append(pageStyle)
       card.mount()
+      runMarks.mount()
       triggers.attach()
+      addEventListener("resize", onResize, { passive: true })
       scheduler.start(loaded)
       pushSummary()
     }
 
     function stop() {
       running = false
+      removeEventListener("resize", onResize)
       triggers.detach()
       card.unmount()
+      runMarks.unmount()
       for (const block of scheduler.all()) unmarkBlock(block.el)
       scheduler.stop()
       pageStyle.remove()
@@ -76,8 +82,15 @@ export default defineContentScript({
     }
 
     function render(block: Block) {
+      if (block.nodes) return runMarks.draw(block)
       if (!block.score || block.score.tooShort) unmarkBlock(block.el)
       else markBlock(block.el, block.score)
+    }
+
+    function redrawRuns() {
+      for (const block of scheduler.all()) {
+        if (block.nodes) runMarks.draw(block)
+      }
     }
 
     function summarize(): Summary {

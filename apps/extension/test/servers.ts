@@ -1,5 +1,5 @@
 import { type IncomingMessage, type Server, createServer } from "node:http"
-import { LONG_PAGE, TEST_PAGE, THREAD_PAGE } from "./fixtures.ts"
+import { BREAKS_PAGE, LONG_PAGE, TEST_PAGE, THREAD_PAGE } from "./fixtures.ts"
 
 export const PAGES_PORT = 8123
 export const STUB_PORT = 3999
@@ -29,7 +29,9 @@ export async function startPageServer(): Promise<Server> {
         ? LONG_PAGE
         : url.startsWith("/thread")
           ? THREAD_PAGE
-          : TEST_PAGE
+          : url.startsWith("/breaks")
+            ? BREAKS_PAGE
+            : TEST_PAGE
     )
   })
   await listen(server, PAGES_PORT)

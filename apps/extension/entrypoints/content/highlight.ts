@@ -1,16 +1,17 @@
 import type { Reason } from "@slop/model"
 import { tellSpans } from "@slop/rules/names"
-import { type TextPosition, serializeBlock } from "./extract"
+import { type TextPosition, serializeBlock, serializeRun } from "./extract"
 
 export const HIGHLIGHT_NAME = "slop"
 
 export function highlightReasons(
   el: Element,
   scoredText: string,
-  reasons: Reason[]
+  reasons: Reason[],
+  nodes?: Node[]
 ): void {
   if (!CSS.highlights) return
-  const { text, positions } = serializeBlock(el)
+  const { text, positions } = nodes ? serializeRun(nodes) : serializeBlock(el)
   if (text !== scoredText) return
 
   const ranges: Range[] = []

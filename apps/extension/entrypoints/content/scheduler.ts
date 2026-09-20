@@ -1,8 +1,17 @@
 import type { Score, Scorer } from "@slop/model"
-import { findBlocks, serializeBlock } from "./extract"
+import {
+  findBlocks,
+  findRunContainers,
+  runRect,
+  runsIn,
+  serializeBlock,
+  serializeRun,
+} from "./extract"
 
 export type Block = {
   el: HTMLElement
+  /** Set when the block is one run of a text separated only by blank lines. */
+  nodes?: Node[]
   text?: string
   score?: Score
   dirty: boolean
@@ -18,7 +27,7 @@ const INITIAL_MS_PER_BLOCK = 1
 const COST_SMOOTHING = 0.3
 
 export class BlockScheduler {
-  private blocks = new Map<HTMLElement, Block>()
+  private blocks = new Map<HTMLElement, Block[]>()
   private queue = new Set<Block>()
   private scorer: Scorer | null = null
   private flushing = false
@@ -54,12 +63,17 @@ export class BlockScheduler {
     this.blocks.clear()
   }
 
-  get(el: Element): Block | undefined {
-    return this.blocks.get(el as HTMLElement)
+  get(el: Element, y?: number): Block | undefined {
+    const blocks = this.blocks.get(el as HTMLElement)
+    if (!blocks || y === undefined || blocks.length < 2) return blocks?.[0]
+    return blocks.find((block) => {
+      const rect = block.nodes && runRect(block.nodes)
+      return rect && y >= rect.top && y <= rect.bottom
+    })
   }
 
-  all(): IterableIterator<Block> {
-    return this.blocks.values()
+  *all(): IterableIterator<Block> {
+    for (const blocks of this.blocks.values()) yield* blocks
   }
 
   private discover(): void {
@@ -69,28 +83,36 @@ export class BlockScheduler {
       this.blocks.delete(el)
       this.intersections.unobserve(el)
     }
-    for (const el of findBlocks(this.minWords, (el) => this.blocks.has(el))) {
-      this.blocks.set(el, { el, dirty: false })
+    const tracked = (el: HTMLElement) => this.blocks.has(el)
+    for (const el of findBlocks(this.minWords, tracked)) {
+      this.blocks.set(el, [{ el, dirty: false }])
+      this.intersections.observe(el)
+    }
+    for (const el of findRunContainers(this.minWords, tracked)) {
+      const runs = runsIn(el, this.minWords).map((nodes) => ({
+        el,
+        nodes,
+        dirty: false,
+      }))
+      this.blocks.set(el, runs)
       this.intersections.observe(el)
     }
   }
 
   private onIntersect(entries: IntersectionObserverEntry[]): void {
     for (const entry of entries) {
-      const block = this.get(entry.target)
-      const needsScore = block && (!block.score || block.dirty)
-      if (entry.isIntersecting && needsScore) this.queue.add(block)
+      if (!entry.isIntersecting) continue
+      for (const block of this.blocks.get(entry.target as HTMLElement) ?? []) {
+        if (!block.score || block.dirty) this.queue.add(block)
+      }
     }
     this.scheduleFlush()
   }
 
   private onMutate(records: MutationRecord[]): void {
     for (const record of records) {
-      const block = this.enclosingBlock(record.target)
-      if (block?.score && !block.dirty) {
-        block.dirty = true
-        this.intersections.unobserve(block.el)
-        this.intersections.observe(block.el)
+      for (const block of this.enclosingBlocks(record.target)) {
+        if (block.score && !block.dirty) this.markDirty(block)
       }
     }
     clearTimeout(this.discoverTimer)
@@ -101,16 +123,22 @@ export class BlockScheduler {
     }, MUTATION_DEBOUNCE_MS)
   }
 
-  private enclosingBlock(node: Node): Block | undefined {
+  private enclosingBlocks(node: Node): Block[] {
     for (
       let n: Node | null = node;
       n && n !== document.body;
       n = n.parentNode
     ) {
-      const block = this.blocks.get(n as HTMLElement)
-      if (block) return block
+      const blocks = this.blocks.get(n as HTMLElement)
+      if (blocks) return blocks
     }
-    return undefined
+    return []
+  }
+
+  private markDirty(block: Block): void {
+    block.dirty = true
+    this.intersections.unobserve(block.el)
+    this.intersections.observe(block.el)
   }
 
   private scheduleFlush(): void {
@@ -122,11 +150,8 @@ export class BlockScheduler {
   }
 
   rescoreAll(): void {
-    for (const block of this.blocks.values()) {
-      if (!block.score) continue
-      block.dirty = true
-      this.intersections.unobserve(block.el)
-      this.intersections.observe(block.el)
+    for (const block of this.all()) {
+      if (block.score) this.markDirty(block)
     }
   }
 
@@ -142,8 +167,13 @@ export class BlockScheduler {
 
       batch.forEach((block, i) => {
         block.score = scores[i]
-        this.intersections.unobserve(block.el)
       })
+      for (const block of batch) {
+        const pending = this.blocks
+          .get(block.el)
+          ?.some((b) => !b.score || b.dirty)
+        if (!pending) this.intersections.unobserve(block.el)
+      }
       if (this.scorer) this.onScored(batch)
     } catch {
     } finally {
@@ -161,7 +191,9 @@ export class BlockScheduler {
       this.queue.delete(block)
       const visible = block.el.checkVisibility({ visibilityProperty: true })
       if (!block.el.isConnected || !visible) continue
-      block.text = serializeBlock(block.el).text
+      block.text = block.nodes
+        ? serializeRun(block.nodes).text
+        : serializeBlock(block.el).text
       block.dirty = false
       batch.push(block)
     }
