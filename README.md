@@ -2,7 +2,7 @@
 
 # Slop Meter
 
-Marks text paragraph by paragraph: **human-ish**, **machine-ish**, **mixed** or **can't tell**, with calibrated odds. A 56 KB model runs in the browser on WebGPU, with a CPU fallback, and no text leaves the device.
+Marks text paragraph by paragraph: **human-ish**, **machine-ish**, **mixed** or **can't tell**, with calibrated odds. A 56 KB model runs in the browser on WebGPU, with a CPU fallback, and no text leaves the device. Paste writing on the site or drop a document on it, or install the extension and read any page you visit.
 
 [slop-meter.com](https://slop-meter.com) · [calibration](https://slop-meter.com/calibration) · [rulebook](https://slop-meter.com/rules) · [install](https://slop-meter.com/install)
 
@@ -40,7 +40,7 @@ pnpm --filter @slop/extension e2e   # real Chromium: marks, card, popup, selecti
 | `packages/lm` | Sharper reading: 8 features from SmolLM2-135M (ONNX, 4-bit) through transformers.js |
 | `packages/theme` | Tokens, Tailwind mapping, answer colors, brand mark |
 | `apps/extension` | WXT MV3. Vanilla TS content script; React popup; offscreen page for the language model |
-| `apps/site` | Next.js 16, shadcn/ui on Base UI. Demo, rulebook, calibration, install. API routes for rewrite, feedback, calibration snapshots |
+| `apps/site` | Next.js 16, shadcn/ui on Base UI. Demo, rulebook, calibration, install. Documents convert to text in the tab through anydoc's WebAssembly build. API routes for rewrite, feedback, calibration snapshots |
 | `training/` | Corpus prep, featurizer, PyTorch trainer, int8 export |
 | `eval/` | Labeled set, held-out reports, demo examples, Jev benchmark |
 
@@ -73,6 +73,7 @@ node featurize-lm.ts && .venv/bin/python train.py --lm   # sharper model, about 
 - Institutional policy statements lean machine-ish. Across 2,788 Federal Register paragraphs, 13.8% lean machine and 0.3% are called machine-ish, so formal prose on its own is fine. The Federal Reserve statement on the site leans machine on 2 of its 3 paragraphs.
 - Text from current models mostly gets can't tell. Short posts and replies lean machine; long essays lean either way.
 - Text written as one element with blank lines between paragraphs is marked run by run, drawn in an overlay. Those lamps are the tab stop, since a run has no element of its own to focus.
+- Documents are read as text, not as pages. A scanned PDF holds pictures of words, so it is refused rather than guessed at; tables, code blocks and images are dropped before scoring; the cap is 20 MB, and the converter is about 6 MB, fetched the first time you open a file.
 - Sharper reading needs WebGPU with 16-bit floats. The language model downloads once, about 120 MB, and adds roughly 800 MB to the tab while it runs.
 - Human web prose comes from one C4 shard (3,000 pages, 2019). RAID's parquet mirror covers 4 of its 8 domains.
 - English only.
