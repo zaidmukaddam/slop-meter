@@ -2,14 +2,14 @@ import { existsSync, statSync } from "node:fs"
 import { readFile } from "node:fs/promises"
 import { join } from "node:path"
 import type { Metadata } from "next"
+import Link from "next/link"
 import { CopyField } from "@/components/install/copy-field"
 import { PagePreview } from "@/components/install/page-preview"
 import { PageIntro } from "@/components/page-intro"
 import { Section } from "@/components/section"
 import { buttonVariants } from "@/components/ui/button"
 import { REPORT } from "@/lib/calibration"
-import { readChangelog } from "@/lib/changelog"
-import { keepUnits } from "@/lib/format"
+import { readReleases } from "@/lib/changelog"
 import { cn } from "@/lib/utils"
 
 const ZIP = "slop-meter-chrome.zip"
@@ -65,7 +65,7 @@ export default async function InstallPage() {
   const { version } = JSON.parse(
     await readFile(join(process.cwd(), "../extension/package.json"), "utf8")
   ) as { version: string }
-  const changelog = await readChangelog()
+  const [latest] = await readReleases()
 
   return (
     <>
@@ -195,31 +195,19 @@ export default async function InstallPage() {
         </p>
       </Section>
 
-      {changelog && (
-        <Section id="changes" label="Changelog" title="What's in each version">
-          <div className="max-w-lg space-y-4 text-[15px]/relaxed text-pretty text-graphite">
-            {changelog.map((block, i) =>
-              block.kind === "heading" ? (
-                <h3
-                  key={i}
-                  className="pt-4 font-mono text-[13px] text-ink first:pt-0"
-                >
-                  {block.text}
-                </h3>
-              ) : block.kind === "list" ? (
-                <ul
-                  key={i}
-                  className="list-disc space-y-2 pl-5 marker:text-etch"
-                >
-                  {block.items.map((item) => (
-                    <li key={item}>{keepUnits(item)}</li>
-                  ))}
-                </ul>
-              ) : (
-                <p key={i}>{keepUnits(block.text)}</p>
-              )
-            )}
-          </div>
+      {latest && (
+        <Section
+          id="changes"
+          label="Changelog"
+          title={`This is version ${latest.version}`}
+        >
+          <p className="max-w-lg text-[15px]/relaxed text-pretty text-graphite">
+            {latest.blocks.find((block) => block.kind === "paragraph")?.text}{" "}
+            <Link href="/changelog" className="text-ink underline">
+              Everything in each release
+            </Link>
+            .
+          </p>
         </Section>
       )}
     </>

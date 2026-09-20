@@ -7,8 +7,9 @@ import { buttonVariants } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 
 const LINKS = [
-  { href: "/calibration", label: "Calibration" },
+  { href: "/models", label: "Models" },
   { href: "/rules", label: "Rulebook" },
+  { href: "/blog", label: "Blog" },
 ]
 
 export function SiteHeader() {

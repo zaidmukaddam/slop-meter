@@ -16,11 +16,17 @@ export function SiteFooter({ modelVersion }: { modelVersion: string }) {
         </div>
         <div className="flex flex-col gap-2 text-graphite sm:items-end">
           <div className="flex gap-5">
-            <Link href="/calibration" className="hover:text-ink">
-              Calibration
+            <Link href="/models" className="hover:text-ink">
+              Models
             </Link>
             <Link href="/rules" className="hover:text-ink">
               Rulebook
+            </Link>
+            <Link href="/blog" className="hover:text-ink">
+              Blog
+            </Link>
+            <Link href="/changelog" className="hover:text-ink">
+              Changelog
             </Link>
             <Link href="/install" className="hover:text-ink">
               Install
