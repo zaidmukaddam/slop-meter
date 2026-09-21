@@ -16,7 +16,10 @@ const SCROLL_TAIL_MS = 1500
 const FIRST_MARK_TIMEOUT_MS = 20_000
 const NO_EXTENSION_SETTLE_MS = 500
 
-export function launch(extensionDir: string | null): Promise<BrowserContext> {
+export function launch(
+  extensionDir: string | null,
+  extraArgs: string[] = []
+): Promise<BrowserContext> {
   const extensionArgs = extensionDir
     ? [
         `--disable-extensions-except=${extensionDir}`,
@@ -27,7 +30,7 @@ export function launch(extensionDir: string | null): Promise<BrowserContext> {
     executablePath: chromePath(),
     headless: true,
     viewport: VIEWPORT,
-    args: [...extensionArgs, "--enable-unsafe-webgpu"],
+    args: [...extensionArgs, "--enable-unsafe-webgpu", ...extraArgs],
   })
 }
 

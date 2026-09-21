@@ -9,6 +9,7 @@
     "zip": "wxt zip",
     "typecheck": "wxt prepare && tsc --noEmit",
     "e2e": "node test/e2e.ts",
+    "shots": "node test/shots.ts",
     "postinstall": "wxt prepare"
   },
   "dependencies": {
