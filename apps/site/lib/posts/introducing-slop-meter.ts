@@ -112,16 +112,6 @@ export const body = (f: PostFacts): PostBlock[] => [
     text: `Every mark traces back to rules you can read. The [rulebook](/rules) has ${f.rules} of them, from stock vocabulary to the paragraph that ends by restating itself, and each comes with an example and the plain version. I use it as a style guide more often than as a detector. Most of the tells are habits of weak writing, and the models learned them from us.`,
   },
 
-  { kind: "h", id: "limits", text: "What it can't do" },
-  {
-    kind: "p",
-    text: "Paraphrasing beats it. Run machine text through a paraphraser and the meter catches fewer than 1 paragraph in 10. Training it on paraphrased text fixes that, and also triples the false accusations on human web pages. I left it broken in the safe direction.",
-  },
-  {
-    kind: "p",
-    text: "It is weakest on human writing that a model has polished. It reads English only, and leaves anything else unmarked. Its picture of how people write on the web comes from a single crawl in 2019. Text from the newest models mostly gets can't tell. The [models page](/models) has every number, the bad ones included.",
-  },
-
   { kind: "h", id: "try-it", text: "Try it" },
   {
     kind: "p",
