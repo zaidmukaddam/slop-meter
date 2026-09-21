@@ -31,6 +31,7 @@ pnpm install
 pnpm check                          # rulebook, format, types, tests, builds, size gate
 pnpm --filter @slop/site dev
 pnpm --filter @slop/extension e2e   # the extension in real Chromium
+WXT_API_BASE=https://slop-meter.com pnpm --filter @slop/extension zip   # the Chrome Web Store zip
 ```
 
 `.env.local` at the repo root takes `AI_GATEWAY_API_KEY` (rewrite and corpus generation). The second round of `training/generate.ts` also reads `OPENAI_API_KEY`, `CLOUDFLARE_ACCOUNT_ID`, `CLOUDFLARE_API_TOKEN` and `AMAZON_BEDROCK_API_KEY`. The site also reads `DATABASE_URL`, `CRON_SECRET` and `REWRITE_MODEL`, all optional.

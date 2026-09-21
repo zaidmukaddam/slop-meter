@@ -45,6 +45,13 @@ export default defineConfig({
     ],
   },
   hooks: {
+    "zip:start": () => {
+      if (/\/\/(localhost|127\.0\.0\.1)/.test(API)) {
+        throw new Error(
+          `a store zip would call ${API}: set WXT_API_BASE=https://slop-meter.com`
+        )
+      }
+    },
     "build:publicAssets": (_wxt, files) => {
       const copy = (specifier: string, relativeDest: string) =>
         files.push({

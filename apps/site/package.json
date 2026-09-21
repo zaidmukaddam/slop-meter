@@ -6,7 +6,7 @@
   "scripts": {
     "predev": "mkdir -p public && cp node_modules/@slop/model/weights/model.bin public/model.bin && cp node_modules/@slop/model/weights/lm/model.bin public/model-lm.bin",
     "dev": "next dev",
-    "prebuild": "mkdir -p public && cp node_modules/@slop/model/weights/model.bin public/model.bin && cp node_modules/@slop/model/weights/lm/model.bin public/model-lm.bin && pnpm --filter @slop/extension zip && cp ../extension/.output/slop-meter-chrome.zip public/slop-meter-chrome.zip",
+    "prebuild": "mkdir -p public && cp node_modules/@slop/model/weights/model.bin public/model.bin && cp node_modules/@slop/model/weights/lm/model.bin public/model-lm.bin && WXT_API_BASE=${WXT_API_BASE:-https://slop-meter.com} pnpm --filter @slop/extension zip && cp ../extension/.output/slop-meter-chrome.zip public/slop-meter-chrome.zip",
     "build": "next build",
     "start": "next start"
   },
