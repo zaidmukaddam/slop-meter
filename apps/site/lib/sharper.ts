@@ -22,8 +22,6 @@ export type SharperState = {
   /** Whether the language model is already in this browser's cache, so turning
    *  sharper reading on costs a load rather than a download. */
   held: boolean
-  /** This device can't carry it, so it isn't offered: see tooSmall. */
-  unfit: boolean
 }
 
 const OFF: SharperState = {
@@ -33,7 +31,6 @@ const OFF: SharperState = {
   error: null,
   ready: 0,
   held: false,
-  unfit: false,
 }
 let state = OFF
 const listeners = new Set<() => void>()
@@ -101,19 +98,11 @@ function remember(on: boolean) {
   } catch {}
 }
 
-/** Sharper reading keeps about 800 MB in the tab. A phone or tablet gives one tab a
- *  fraction of that, and the browser's answer to running out is to kill the page. No API
- *  reports the ceiling on Safari, so this goes by the kind of device: touch first, no
- *  hover. Chrome does report memory, and under 4 GB is the same story. */
-function tooSmall(): boolean {
-  const memory = (navigator as { deviceMemory?: number }).deviceMemory
-  return (
-    (memory !== undefined && memory < 4) ||
-    matchMedia("(pointer: coarse) and (hover: none)").matches
-  )
-}
-
-/** Set for as long as the language model is running, cleared when it is turned off or
+/** Sharper reading keeps about 800 MB in the tab, and a browser that runs out kills the
+ *  page. No API reports the ceiling, so no device is refused up front: this marker is
+ *  how a phone that couldn't carry it finds out, once, and stays off afterwards.
+ *
+ *  Set for as long as the language model is running, cleared when it is turned off or
  *  the page leaves normally. Finding it on arrival means the tab went down with the
  *  model in it. Held the whole time and not just during start-up, because the memory
  *  peak comes with the first big batch, not with loading. */
@@ -140,11 +129,6 @@ export function resume(): void {
   if (resuming) return
   resuming = true
   try {
-    if (tooSmall()) {
-      remember(false)
-      update({ unfit: true })
-      return
-    }
     if (!localStorage.getItem(STARTING)) return again()
     // Without this the preference is a trap: the page dies, reloads, remembers that
     // sharper reading was on, starts it, and dies again, downloading 125 MB each lap
@@ -199,7 +183,7 @@ async function held(): Promise<void> {
 
 export async function turnOn(): Promise<void> {
   if (state.status === "on" || state.status === "loading") return
-  if (state.unfit || checking) return
+  if (checking) return
   // Know whether this is a download or a start before saying which. Half a second of
   // "Downloading, 0%" on every reload is how a cached model gets a reputation for
   // downloading itself again.

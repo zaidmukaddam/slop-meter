@@ -28,7 +28,6 @@ const fetching = (s: SharperState) =>
   s.status === "loading" && !s.held && s.progress < 1
 
 function badge(s: SharperState): string | null {
-  if (s.unfit) return "computer only"
   if (s.status === "on") return null
   if (s.status !== "loading") return s.held ? "saved" : DOWNLOAD
   return fetching(s) ? `${Math.round(s.progress * 100)}%` : "starting"
@@ -37,9 +36,6 @@ function badge(s: SharperState): string | null {
 /** What is happening right now, in the phase where people otherwise wonder
  *  whether it is downloading 125 MB all over again. It isn't. */
 function note(s: SharperState): string | null {
-  if (s.unfit) {
-    return "Sharper reading keeps about 800 MB in memory, more than a phone or tablet gives one tab. It's there on a computer."
-  }
   if (s.status === "failed") {
     return s.error?.retry
       ? `Sharper couldn't start: ${s.error.message}. Choose it to try again.`
@@ -102,7 +98,6 @@ export function ModelChoice({
         <ToggleGroupItem
           key={id}
           value={id}
-          disabled={id === "sharper" && sharper.unfit}
           title={
             id === "standard"
               ? undefined
