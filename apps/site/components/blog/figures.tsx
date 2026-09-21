@@ -1,6 +1,7 @@
 import { DECISION_LABEL as LABEL, type Decision } from "@slop/model"
 import Image from "next/image"
 import { Dial } from "@/components/meter/dial"
+import { StandardPipeline } from "@/components/models/architecture"
 import { COLOR } from "@/lib/decisions"
 import { percent } from "@/lib/format"
 import { MODELS } from "@/lib/models"
@@ -16,6 +17,16 @@ export function PostFigure({
   if (figure === "answers") return <Answers />
   if (figure === "extension") return <Extension />
   if (figure === "numbers") return <Numbers facts={facts} />
+  if (figure === "architecture") {
+    return (
+      <Frame
+        wide
+        caption="Standard, end to end. Sharper is the same picture with eight more numbers going in."
+      >
+        <StandardPipeline />
+      </Frame>
+    )
+  }
   return <ModelsTable />
 }
 

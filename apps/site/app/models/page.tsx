@@ -1,6 +1,11 @@
+import sharperManifest from "@slop/model/lm/manifest.json"
 import type { Metadata } from "next"
 import Link from "next/link"
 import { ReliabilityCharts } from "@/components/calibration/reliability-charts"
+import {
+  SharperPipeline,
+  StandardPipeline,
+} from "@/components/models/architecture"
 import { Benchmark } from "@/components/models/benchmark"
 import { Compare } from "@/components/models/compare"
 import { FlagField } from "@/components/models/flag-field"
@@ -8,9 +13,49 @@ import { PageIntro } from "@/components/page-intro"
 import { Section } from "@/components/section"
 import { REPORT } from "@/lib/calibration"
 import { integer } from "@/lib/format"
+import { MODELS } from "@/lib/models"
 import { loadDemo } from "@/lib/models-demo"
+import { cn } from "@/lib/utils"
 
 const SURE = Math.round(REPORT.decision.tauMachine * 100)
+
+const [standard, sharper] = MODELS
+const train = REPORT.corpus.train
+const { lm } = sharperManifest
+
+const BUILD = [
+  {
+    title: "What it learned from",
+    body: `${integer(train.human + train.machine + train.mixed)} paragraphs: ${integer(train.human)} by people, ${integer(train.machine)} by models and ${integer(train.mixed)} by both. Another ${integer(REPORT.model.test.n)} were held back for testing and never trained on.`,
+  },
+  {
+    title: `${REPORT.model.seeds.length} runs, one ships`,
+    body: "Each retrain fits the network from several starting points, a few minutes in all. The run that catches the most text from current models ships, as long as it flags at most 1 person's paragraph in 1,000.",
+  },
+  {
+    title: "Small enough to go anywhere",
+    body: `The ${integer(standard.manifest.params)} weights are rounded to 8-bit integers, which is how the model fits in ${Math.round(standard.manifest.bytes / 1024)} KB. Rounding moves no probability by more than ${REPORT.quantization.maxAbsProbDelta.toFixed(2)}.`,
+  },
+  {
+    title: "Fast enough to read as you scroll",
+    body: `Measuring a paragraph takes about ${REPORT.featureMsPerParagraph.toFixed(2)} ms. The network is a page of TypeScript, with a WGSL shader doing the same sums on WebGPU where the browser has it.`,
+  },
+]
+
+const BUILD_SHARPER = [
+  {
+    title: `The ${lm.features.length} numbers`,
+    body: "How surprising it found the words, how open each choice was, where each word ranked, how often the word was its first pick or in its top ten, and how much surprise varies across the paragraph. Two more are the statistics from the Fast-DetectGPT and Binoculars papers.",
+  },
+  {
+    title: "Why it helps",
+    body: "Text a model wrote is text a language model finds unsurprising. Standard can't see that, because it only counts things. With it, the same network is sure about more than twice as many paragraphs.",
+  },
+  {
+    title: "Kept off the CPU",
+    body: `The language model's raw output is 49,152 numbers for every word. A shader reduces that on the GPU, so only 16 bytes a word come back. It took the memory Sharper holds in Safari from about 2 GB to under 600 MB.`,
+  },
+]
 
 const LIMITS = [
   {
@@ -38,6 +83,26 @@ export const metadata: Metadata = {
     "Standard and Sharper side by side: how each one reads, how often it gives a verdict, how often it's right, and what it costs to run.",
 }
 
+function Notes({ items }: { items: { title: string; body: string }[] }) {
+  return (
+    <dl
+      className={cn(
+        "mt-16 grid gap-x-12 gap-y-10 sm:grid-cols-2",
+        items.length === 4 ? "lg:grid-cols-4" : "max-w-5xl lg:grid-cols-3"
+      )}
+    >
+      {items.map((item) => (
+        <div key={item.title}>
+          <dt className="font-semibold text-pretty">{item.title}</dt>
+          <dd className="mt-2 max-w-sm text-[15px]/relaxed text-pretty text-graphite">
+            {item.body}
+          </dd>
+        </div>
+      ))}
+    </dl>
+  )
+}
+
 export default async function ModelsPage() {
   const demo = await loadDemo()
   return (
@@ -49,6 +114,26 @@ export default async function ModelsPage() {
           call. Both run on your device.
         </p>
       </PageIntro>
+
+      <Section
+        id="standard"
+        label="Standard · on by default"
+        title="A small network that never sees your words"
+        lead={`A paragraph is turned into ${standard.manifest.features.length} numbers first, and only the numbers go into the model. That is why it fits in ${Math.round(standard.manifest.bytes / 1024)} KB and ships inside the page.`}
+      >
+        <StandardPipeline />
+        <Notes items={BUILD} />
+      </Section>
+
+      <Section
+        id="sharper"
+        label="Sharper · off by default"
+        title="The same network, with a language model's opinion"
+        lead="Sharper runs a small language model over the paragraph, on your device, and hands what it learns to a slightly wider network."
+      >
+        <SharperPipeline />
+        <Notes items={BUILD_SHARPER} />
+      </Section>
 
       <Compare demo={demo} />
 

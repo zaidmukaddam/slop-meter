@@ -1,10 +1,12 @@
 import { RULES } from "@slop/rules"
 import type { Metadata } from "next"
 import Link from "next/link"
+import { PostCover } from "@/components/blog/cover"
 import { PostFigure } from "@/components/blog/figures"
 import { integer, percent } from "@/lib/format"
 import { MODELS } from "@/lib/models"
 import { longDate } from "@/lib/posts"
+import { loadCover } from "@/lib/posts/cover"
 import { type PostFacts, body, meta } from "@/lib/posts/introducing-slop-meter"
 
 const [standard, sharper] = MODELS
@@ -23,6 +25,12 @@ const FACTS: PostFacts = {
   webMachine: percent(web.machine, 2),
   sharperAnswers: percent(1 - sharper.report.decision.shipped.unsureRate),
   download: "125 MB",
+  arch: standard.report.model.arch.match(/\d+/g)!.join(" → "),
+  sharperArch: sharper.report.model.arch.match(/\d+/g)!.join(" → "),
+  params: integer(standard.manifest.params),
+  trainN: integer(
+    Object.values(standard.report.corpus.train).reduce((a, b) => a + b, 0)
+  ),
   source: process.env.NEXT_PUBLIC_SOURCE_URL ?? null,
 }
 
@@ -65,7 +73,8 @@ function Inline({ text }: { text: string }) {
   return parts
 }
 
-export default function IntroducingSlopMeter() {
+export default async function IntroducingSlopMeter() {
+  const cover = await loadCover()
   return (
     <article>
       <header className="mx-auto w-full max-w-[1200px] px-5 pt-12 pb-12 sm:px-8 lg:pt-16">
@@ -85,6 +94,8 @@ export default function IntroducingSlopMeter() {
           <time dateTime={meta.date}>{longDate(meta.date)}</time>
         </p>
       </header>
+
+      <PostCover cover={cover} />
 
       <div className="border-t border-hairline">
         <div className="mx-auto w-full max-w-[680px] px-5 py-16 sm:px-8 lg:py-20">

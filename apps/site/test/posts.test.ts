@@ -30,6 +30,10 @@ const FACTS: PostFacts = {
   webMachine: "0.4%",
   sharperAnswers: "22%",
   download: "125 MB",
+  arch: "176 → 224 → 64 → 3",
+  sharperArch: "184 → 224 → 64 → 3",
+  params: "54,243",
+  trainN: "62,351",
   source: null,
 }
 

@@ -5,6 +5,7 @@ import {
   shownP,
 } from "@slop/model"
 import { Dial } from "@/components/meter/dial"
+import { Section } from "@/components/section"
 import { COLOR, machineShare } from "@/lib/decisions"
 import { keepUnits, percent } from "@/lib/format"
 import { MODELS, SPECS } from "@/lib/models"
@@ -14,7 +15,7 @@ import { cn } from "@/lib/utils"
 const COLUMNS =
   "grid grid-cols-2 gap-x-6 sm:gap-x-12 lg:grid-cols-[15rem_minmax(0,1fr)_minmax(0,1fr)]"
 
-function Reading({ name, score }: { name: string; score: Score }) {
+export function Reading({ name, score }: { name: string; score: Score }) {
   const decided = score.localDecision !== "unsure"
   const shown = Math.round(machineShare(score) * 100)
   return (
@@ -63,14 +64,16 @@ function Reading({ name, score }: { name: string; score: Score }) {
 
 export function Compare({ demo }: { demo: Demo }) {
   return (
-    <section
-      aria-label="Standard and Sharper, side by side"
-      className="mx-auto w-full max-w-[1200px] px-5 pb-20 sm:px-8 sm:pb-28"
+    <Section
+      id="compare"
+      label="Side by side"
+      title="The same paragraph, read by both"
+      lead="Both lean the same way. Only Sharper is sure enough to say so."
     >
-      <div className={cn(COLUMNS, "border-t border-hairline pt-10 sm:pt-14")}>
+      <div className={COLUMNS}>
         <figure className="max-lg:col-span-2 max-lg:mb-10">
           <figcaption className="legend text-[10px] font-semibold text-graphite">
-            One paragraph, both models
+            The paragraph
           </figcaption>
           <blockquote className="mt-4 font-serif text-[15px]/relaxed text-pretty lg:text-sm/relaxed">
             {demo.text}
@@ -82,14 +85,11 @@ export function Compare({ demo }: { demo: Demo }) {
         {MODELS.map((model, i) => (
           <div key={model.id} className="min-w-0">
             <Reading name={model.name} score={demo.scores[i]} />
-            <h2 className="mt-8 text-[clamp(1.5rem,8vw,2.25rem)] leading-none font-light tracking-[-0.03em] [font-stretch:112%] sm:text-[3.25rem]">
+            <h3 className="mt-8 text-[clamp(1.5rem,8vw,2.25rem)] leading-none font-light tracking-[-0.03em] [font-stretch:112%] sm:text-[3.25rem]">
               {model.name}
-            </h2>
+            </h3>
             <p className="legend mt-3 text-[10px] font-semibold text-graphite">
               {model.role}
-            </p>
-            <p className="mt-4 max-w-xs text-[15px]/relaxed text-pretty">
-              {model.how}
             </p>
           </div>
         ))}
@@ -135,6 +135,6 @@ export function Compare({ demo }: { demo: Demo }) {
           </dl>
         </section>
       ))}
-    </section>
+    </Section>
   )
 }

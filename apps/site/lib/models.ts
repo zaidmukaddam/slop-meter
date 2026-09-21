@@ -1,6 +1,5 @@
 import base from "@slop/model/manifest.json"
 import sharp from "@slop/model/lm/manifest.json"
-import { RULES } from "@slop/rules"
 import type { ModelFacts } from "@/components/bench/model-choice"
 import { REPORT, REPORT_LM, type Report } from "./calibration"
 import { integer, percent } from "./format"
@@ -12,7 +11,6 @@ export const MODELS = [
     id: "standard" as const,
     name: "Standard",
     role: "On by default",
-    how: `Looks at the writing itself: word choice, sentence rhythm, and the ${RULES.length} habits in the rulebook.`,
     manifest: base,
     report: REPORT as Report,
   },
@@ -20,7 +18,6 @@ export const MODELS = [
     id: "sharper" as const,
     name: "Sharper",
     role: "Off by default",
-    how: "Everything Standard does, plus a small language model that checks how predictable each word is.",
     manifest: sharp,
     report: REPORT_LM as Report,
   },

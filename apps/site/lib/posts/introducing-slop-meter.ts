@@ -10,10 +10,15 @@ export type PostFacts = {
   webMachine: string
   sharperAnswers: string
   download: string
+  arch: string
+  sharperArch: string
+  params: string
+  trainN: string
   source: string | null
 }
 
-export type FigureId = "answers" | "extension" | "numbers" | "models"
+export type FigureId =
+  "answers" | "extension" | "numbers" | "models" | "architecture"
 
 export type PostBlock =
   | { kind: "p"; text: string }
@@ -81,6 +86,25 @@ export const body = (f: PostFacts): PostBlock[] => [
     text: `Standard is the model described so far. Sharper reading adds a small language model, SmolLM2 at 135 million parameters, which reads the same paragraph on your machine and reports how surprising it found each word. Machine text is text a language model finds unsurprising. Eight extra numbers from that reading let the meter answer on ${f.sharperAnswers} of paragraphs instead of ${f.answers}, and it is right about as often. The price is a ${f.download} download, once. The [models page](/models) sets the two side by side.`,
   },
   { kind: "figure", figure: "models" },
+
+  { kind: "h", id: "built", text: "How it's built" },
+  {
+    kind: "p",
+    text: `Standard never sees your words as words. A paragraph goes in and ${f.numbers} numbers come out. There is a score for each of the 36 rules a program can measure, the rate of 107 function words like the, of and which, and a few dozen counts: punctuation, how long the sentences run, whether you used a contraction. Measuring takes about a tenth of a millisecond.`,
+  },
+  {
+    kind: "p",
+    text: `Those numbers go into a network with three layers, ${f.arch}. That is ${f.params} weights, and I store them as 8-bit integers, which is how the whole thing fits in ${f.kb}. Rounding them moves no probability by more than 0.02. The network itself is one page of TypeScript, and a WGSL shader does the same sums on WebGPU.`,
+  },
+  { kind: "figure", figure: "architecture" },
+  {
+    kind: "p",
+    text: `It learned from ${f.trainN} paragraphs, and a retrain takes a few minutes on my laptop. I fit five networks from different starting points and ship one: whichever catches the most text from current models while flagging no more than 1 person's paragraph in 1,000. A last step bends the raw outputs until a 90% really is right nine times in ten.`,
+  },
+  {
+    kind: "p",
+    text: `Sharper keeps all of that and widens the input by eight, to ${f.sharperArch}. The eight come from SmolLM2 reading the first 256 tokens: how likely it found each word, how open the choice was, where the word ranked, how much that varied. Two of them are the statistics from the Fast-DetectGPT and Binoculars papers. For every word the language model puts out 49,152 numbers, so a shader boils them down on the GPU and 16 bytes a word come back. Before I wrote that shader, Sharper held about 2 GB in a Safari tab. Now it holds under 600 MB.`,
+  },
 
   { kind: "h", id: "rulebook", text: "The rulebook" },
   {

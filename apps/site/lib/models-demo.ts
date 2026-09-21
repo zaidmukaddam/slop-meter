@@ -13,7 +13,7 @@ export type Demo = {
   scores: [standard: Score, sharper: Score]
 }
 
-function weights(name: string): ArrayBuffer {
+export function weights(name: string): ArrayBuffer {
   const bin = readFileSync(join(process.cwd(), "public", name))
   return bin.buffer.slice(bin.byteOffset, bin.byteOffset + bin.byteLength)
 }
