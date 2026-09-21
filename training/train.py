@@ -25,6 +25,8 @@ TAU_ACCURACY_TARGET = 0.96
 FALSE_MACHINE_CAP = 0.001
 FALSE_MACHINE_CAP_LM = 0.002
 TAU_GRID = np.round(np.arange(0.34, 0.99, 0.01), 2)
+TAU_MACHINE_FLOOR = 0.97
+ENSEMBLE = 3
 MIN_WORDS = 25
 RULE_FIRED = 0.05
 MIN_FRESH_FEEDBACK = 50
@@ -285,8 +287,34 @@ def train_mlp(d: Dataset, seed: int) -> tuple[nn.Sequential, float]:
     return candidates[best], best
 
 def train_candidate(d: Dataset, seed: int, labels: dict, words: dict) -> dict:
-    cols = list(range(d.dim))
     mlp, modern_weight = train_mlp(d, seed)
+    return calibrated(d, mlp, labels, words, seed=seed, modernWeight=modern_weight)
+
+def val_catch(d: Dataset, c: dict, labels: np.ndarray, false_alarms: float = 0.005) -> float:
+    machine = softmax(run_quantized(c["quantized"], d.Z[d.idx["val"]]))[:, MACHINE]
+    bar = np.quantile(machine[labels == HUMAN], 1 - false_alarms)
+    return float((machine[(labels == MACHINE) & d.modern[d.idx["val"]]] > bar).mean())
+
+def merged(members: list[dict]) -> nn.Sequential:
+    folded = []
+    for c in members:
+        layers = linear_layers(c["mlp"])
+        w, b = layers[-1]
+        layers[-1] = (w * c["scale"][:, None], b * c["scale"] + c["shift"])
+        folded.append(layers)
+    first, middle, last = zip(*folded)
+    wide = [
+        (np.vstack([w for w, _ in first]), np.concatenate([b for _, b in first])),
+        (np.asarray(torch.block_diag(*[torch.tensor(w) for w, _ in middle])), np.concatenate([b for _, b in middle])),
+        (np.hstack([w for w, _ in last]) / len(members), np.mean([b for _, b in last], 0)),
+    ]
+    net = nn.Sequential(*[m for w, _ in wide for m in (nn.Linear(w.shape[1], w.shape[0]), nn.ReLU())][:-1])
+    for linear, (w, b) in zip([m for m in net if isinstance(m, nn.Linear)], wide):
+        linear.weight.data, linear.bias.data = torch.tensor(w), torch.tensor(b.astype(np.float32))
+    return net.eval()
+
+def calibrated(d: Dataset, mlp: nn.Module, labels: dict, words: dict, **meta) -> dict:
+    cols = list(range(d.dim))
     scale, shift = fit_vector_scaling(logits_of(d, mlp, cols, "val"), labels["val"])
     layers = linear_layers(mlp)
     w, b = layers[-1]
@@ -302,9 +330,8 @@ def train_candidate(d: Dataset, seed: int, labels: dict, words: dict) -> dict:
         else None
     )
     return {
-        "seed": seed,
+        **meta,
         "mlp": mlp,
-        "modernWeight": modern_weight,
         "scale": scale,
         "shift": shift,
         "quantized": quantized,
@@ -371,7 +398,7 @@ def wilson_low(p: float, n: int, z: float = 1.96) -> float:
 
 def choose_thresholds(probs: np.ndarray, words: np.ndarray, labels: np.ndarray) -> tuple[float, float] | None:
     best = None
-    for tau_machine in TAU_GRID:
+    for tau_machine in TAU_GRID[TAU_GRID >= TAU_MACHINE_FLOOR]:
         for tau in TAU_GRID:
             o = outcome(probs, words, labels, tau, tau_machine)
             accurate = wilson_low(o["accuracyDecided"] or 0, o["decided"]) >= TAU_ACCURACY_TARGET
@@ -555,19 +582,33 @@ def main() -> None:
 
     started = time.time()
     tried = [train_candidate(d, seed, labels, words) for seed in range(args.seeds)]
-    chosen = max(
-        (c for c in tried if c["bars"]),
-        key=lambda c: (c["val"]["modernMachineCaught"], -c["val"]["falseMachineRateOnHuman"]),
-        default=tried[0],
+    members = sorted(tried, key=lambda c: -val_catch(d, c, labels["val"]))[:ENSEMBLE] if lm else []
+    chosen = (
+        calibrated(
+            d,
+            merged(members),
+            labels,
+            words,
+            seed=[c["seed"] for c in members],
+            modernWeight=[c["modernWeight"] for c in members],
+        )
+        if members
+        else max(
+            (c for c in tried if c["bars"]),
+            key=lambda c: (c["val"]["modernMachineCaught"], -c["val"]["falseMachineRateOnHuman"]),
+            default=tried[0],
+        )
     )
     mlp, modern_weight, scale, shift, quantized, bars = (
         chosen[k] for k in ("mlp", "modernWeight", "scale", "shift", "quantized", "bars")
     )
+    params = sum(p.numel() for c in members or [chosen] for p in c["mlp"].parameters())
     mlp_probs = lambda split: softmax(logits_of(d, mlp, all_cols, split) * scale + shift)
     test_probs = mlp_probs("test")
     report["model"] = {
         "arch": f"MLP {d.dim}-{HIDDEN[0]}-{HIDDEN[1]}-3 ReLU",
-        "params": sum(p.numel() for p in mlp.parameters()),
+        "params": params,
+        "members": len(members) or 1,
         "modernWeight": modern_weight,
         "seed": chosen["seed"],
         "seeds": [
@@ -646,7 +687,8 @@ def main() -> None:
             "tauMachine": tau_machine,
             "minWords": MIN_WORDS,
             "bytes": len(blob),
-            "params": int(sum(l.q.size + l.bias.size for l in quantized)),
+            "params": int(params),
+            "members": len(members) or 1,
             **({"lm": {k: lm[k] for k in ("repo", "dtype", "maxTokens", "features")}} if lm else {}),
         },
     )

@@ -36,7 +36,7 @@ export const meta = {
 export const body = (f: PostFacts): PostBlock[] => [
   {
     kind: "p",
-    text: "I read a lot of text that a model wrote, and I usually find out halfway through. The rhythm gives it away first. Three tidy points, a sentence announcing what the next sentence will say, a closing line about the future. Slop Meter is a small tool that notices the same things and says so in the margin.",
+    text: "I read a lot of text that a model wrote, and most days I only find out halfway through. It is the rhythm that gives it away. Three tidy points, a sentence that tells you what the next one will say, and a last line about the future. So I built Slop Meter, a small tool that notices the same things I do and says so in the margin.",
   },
   {
     kind: "p",
@@ -103,7 +103,7 @@ export const body = (f: PostFacts): PostBlock[] => [
   },
   {
     kind: "p",
-    text: `Sharper keeps all of that and widens the input by eight, to ${f.sharperArch}. The eight come from SmolLM2 reading the first 256 tokens: how likely it found each word, how open the choice was, where the word ranked, how much that varied. Two of them are the statistics from the Fast-DetectGPT and Binoculars papers. For every word the language model puts out 49,152 numbers, so a shader boils them down on the GPU and 16 bytes a word come back. Before I wrote that shader, Sharper held about 2 GB in a Safari tab. Now it holds under 600 MB.`,
+    text: `Sharper keeps all of that and widens the input by eight, to ${f.sharperArch}. It is three of those networks, not one. I train eight, keep the three that catch the most on text they never trained on, and average what they say. The eight extra numbers come from SmolLM2 reading the first 256 tokens: how likely it found each word, how open the choice was, where the word ranked, how much that varied. Two of them are the statistics from the Fast-DetectGPT and Binoculars papers. For every word the language model puts out 49,152 numbers, so a shader boils them down on the GPU and 16 bytes a word come back. Before I wrote that shader, Sharper held about 2 GB in a Safari tab. Now it holds under 600 MB.`,
   },
 
   { kind: "h", id: "rulebook", text: "The rulebook" },

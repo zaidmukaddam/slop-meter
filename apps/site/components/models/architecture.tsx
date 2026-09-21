@@ -168,8 +168,9 @@ export function SharperPipeline() {
         </p>
         <p className={NOTE}>
           Standard&apos;s {integer(LAYERS[0])} numbers plus the{" "}
-          {lm.features.length}, in orange. {integer(sharper.manifest.params)}{" "}
-          weights.
+          {lm.features.length}, in orange. {sharper.report.model.members} copies
+          trained from different starts vote, {integer(sharper.manifest.params)}{" "}
+          weights in all.
         </p>
       </li>
       <li className={STAGE}>

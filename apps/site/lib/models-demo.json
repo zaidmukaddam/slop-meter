@@ -1,9 +1,9 @@
 {
-  "example": "machine-copy",
-  "paragraph": 0,
+  "source": "GPT-4.1 nano, a gardening page",
+  "text": "Caring for your ranunculus after deadheading is a great way to encourage continued blooms and healthy growth. Once you've removed the spent flowers, make sure to keep the plant in a sunny spot with well-draining soil, and water it regularly, but avoid overwatering to prevent rot.",
   "lm": [
-    -3.3601233959198, 2.843738317489624, -1.9183988571166992, 1.181586742401123,
-    1.8112621307373047, 0.4084506928920746, 0.6760563254356384,
-    3.3461430072784424
+    -2.611067056655884, 3.0834386348724365, 1.640380859375, 0.8468036651611328,
+    1.2582495212554932, 0.4166666567325592, 0.8166666626930237,
+    2.434995651245117
   ]
 }

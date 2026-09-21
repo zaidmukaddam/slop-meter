@@ -3,7 +3,6 @@ import { join } from "node:path"
 import { type Score, Scorer } from "@slop/model"
 import lmManifest from "@slop/model/lm/manifest.json"
 import manifest from "@slop/model/manifest.json"
-import { EXAMPLES, EXAMPLE_LABELS } from "./examples"
 import demo from "./models-demo.json"
 
 export type Demo = {
@@ -19,8 +18,7 @@ export function weights(name: string): ArrayBuffer {
 }
 
 export async function loadDemo(): Promise<Demo> {
-  const example = EXAMPLES.find((e) => e.id === demo.example)!
-  const text = example.text.split(/\n\n+/)[demo.paragraph]
+  const { text, source } = demo
   const standard = await Scorer.create(manifest, weights("model.bin"), {
     backend: "cpu",
   })
@@ -31,7 +29,7 @@ export async function loadDemo(): Promise<Demo> {
   return {
     text,
     words: text.split(/\s+/).length,
-    source: EXAMPLE_LABELS[example.id],
+    source,
     scores: [
       standard.score(text),
       sharper.score(text, Float32Array.from(demo.lm)),

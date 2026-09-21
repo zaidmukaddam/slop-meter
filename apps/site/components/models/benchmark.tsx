@@ -122,12 +122,13 @@ export function Benchmark() {
 
       <p className="mt-6 max-w-2xl text-[13px]/relaxed text-pretty text-graphite">
         Jev answers almost every time, and that is where its mistakes come from.
-        Made to stay quiet as often as each other, Jev and Standard are equally
-        accurate: {percent(point.jev.accuracyDecided)} and{" "}
-        {percent(point.local.accuracyDecided)}. Jev is typesafe-ai/jev, asked
-        through an API on {study.date}. It was given Standard&apos;s
-        measurements of each paragraph, not the text. Standard and Sharper read
-        the same paragraphs with the weights that ship.
+        Made to stay quiet as often as each other, Jev is right{" "}
+        {percent(point.jev.accuracyDecided)} of the time and Standard{" "}
+        {percent(point.local.accuracyDecided)}, too close to call on a sample
+        this size. Jev is typesafe-ai/jev, asked through an API on {study.date}.
+        It was given Standard&apos;s measurements of each paragraph, not the
+        text. Standard and Sharper read the same paragraphs with the weights
+        that ship.
       </p>
     </div>
   )

@@ -64,7 +64,7 @@ const LIMITS = [
   },
   {
     title: "A person's draft polished by a model",
-    body: "About half of it still reads as human. The rest leans mixed or machine-ish.",
+    body: "It depends on how much the model changed. A light edit still reads as human. A heavy rewrite reads as machine-ish, and by then most of the words are the model's.",
   },
   {
     title: "The newest models are harder",

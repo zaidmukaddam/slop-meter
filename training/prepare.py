@@ -15,11 +15,17 @@ EVAL = Path(__file__).parent.parent / "eval"
 MIN_WORDS = 25
 PER_DOC = 2
 MAX_SPLICES = 1200
-PUBLIC_MACHINE_PER_SOURCE = 3000
+PUBLIC_MACHINE_PER_SOURCE = 6000
+PER_SEED_AND_SOURCE = 2
 EVAL_QUOTA = {"human": 90, "machine": 70, "mixed": 40}
 WEB_EVAL = 24000
-C4_TRAIN_PAGES = 3000
+C4_TRAIN_PAGES = 12000
+C4_SEED_PAGES = 3000
+HUMAN_PER_SOURCE = 12000
+SEEDS_PER_SOURCE = 2500
 PER_SHARD = 6000
+POLISH_KEPT_HUMAN = 0.8
+POLISH_KEPT_MACHINE = 0.2
 
 SENTENCE_BREAK = re.compile(r"(?<=[.!?])\s+")
 CODE = re.compile(r'```|^\s{4}\S|[{};]\s*$|^\s*"[^"\n]{1,60}"\s*:', re.MULTILINE)
@@ -90,7 +96,7 @@ def add_raid(corpus: Corpus) -> tuple[pd.DataFrame, pd.DataFrame]:
 
     clean = raid[(raid.model != "human") & (raid.attack == "none") & raid.decoding.isin(["greedy", "sampling"])]
     for (domain, model), group in clean.groupby(["domain", "model"]):
-        sample = group.sample(min(len(group), 20 if domain == "poetry" else 80), random_state=2)
+        sample = group.sample(min(len(group), 35 if domain == "poetry" else 140), random_state=2)
         for r in sample.itertuples():
             corpus.append(r.generation, label="machine", source="raid", domain=domain, model=model, group=r.source_id)
 
@@ -137,29 +143,34 @@ def add_web_humans(corpus: Corpus) -> list[dict]:
 
     reddit = pd.read_parquet(DATA / "human/reddit.parquet", columns=["content", "summary", "subreddit", "id"])
     reddit = reddit.sample(20000, random_state=5)
-    reddit = reddit[reddit.content.str.split().str.len().between(60, 400)].head(2500)
-    for r in reddit.itertuples():
+    reddit = reddit[reddit.content.str.split().str.len().between(60, 400)].head(HUMAN_PER_SOURCE)
+    for i, r in enumerate(reddit.itertuples()):
         group = f"reddit-{r.id}"
         corpus.append(r.content, label="human", source="reddit", domain="reddit", model="human", group=group)
-        seeds.append({"domain": "reddit", "group": group, "topic": f"r/{r.subreddit}: {r.summary}", "human": r.content})
+        if i < SEEDS_PER_SOURCE:
+            topic = f"r/{r.subreddit}: {r.summary}"
+            seeds.append({"domain": "reddit", "group": group, "topic": topic, "human": r.content})
 
     yelp = pd.read_parquet(DATA / "human/yelp.parquet").sample(6000, random_state=6)
     yelp["text"] = yelp.text.str.replace("\\n", "\n", regex=False)
-    yelp = yelp[yelp.text.str.split().str.len().between(60, 400)].head(2500)
+    yelp = yelp[yelp.text.str.split().str.len().between(60, 400)].head(HUMAN_PER_SOURCE)
     for i, r in enumerate(yelp.itertuples()):
         group = f"yelp-{i}"
         corpus.append(r.text, label="human", source="yelp", domain="reviews", model="human", group=group)
+        if i >= SEEDS_PER_SOURCE:
+            continue
         gist = " ".join(r.text.split()[:25])
         topic = f'a {r.label + 1}-star review of a local business; the reviewer\'s gist: "{gist}..."'
         seeds.append({"domain": "reviews", "group": group, "topic": topic, "human": r.text})
 
     wiki = pd.read_parquet(DATA / "human/wiki.parquet", columns=["id", "title", "text"]).sample(8000, random_state=8)
-    wiki = wiki[wiki.text.str.split().str.len() > 150].head(2500)
-    for r in wiki.itertuples():
+    wiki = wiki[wiki.text.str.split().str.len() > 150].head(HUMAN_PER_SOURCE)
+    for i, r in enumerate(wiki.itertuples()):
         group = f"wiki-{r.id}"
         body = "\n\n".join(b for b in r.text.split("\n\n") if len(b.split()) >= MIN_WORDS)
         corpus.append(body, label="human", source="wikipedia", domain="wiki", model="human", group=group)
-        seeds.append({"domain": "wiki", "group": group, "topic": r.title, "human": body})
+        if i < SEEDS_PER_SOURCE:
+            seeds.append({"domain": "wiki", "group": group, "topic": r.title, "human": body})
     return seeds
 
 def raid_seeds(human: pd.DataFrame) -> list[dict]:
@@ -198,29 +209,49 @@ def add_replies(corpus: Corpus, replies: list[tuple[str, str, str]], source: str
             text, label="machine", source=source, domain="chat", model=model, group=f"{source}-{group}"
         )
 
+def word_pairs(text: str) -> set[tuple[str, str]]:
+    words = re.findall(r"[a-z0-9']+", text.lower())
+    return set(zip(words, words[1:]))
+
+def polish_label(human: str, polished: str) -> str:
+    before, after = word_pairs(human), word_pairs(polished)
+    kept = len(before & after) / len(after) if after else 0.0
+    if kept >= POLISH_KEPT_HUMAN:
+        return "human"
+    return "machine" if kept < POLISH_KEPT_MACHINE else "mixed"
+
 def add_generations(corpus: Corpus) -> int:
     path = DATA / "gen.jsonl"
     if not path.exists():
         return 0
-    kept = {}
+    originals = {}
+    for line in (DATA / "seeds.jsonl").open():
+        seed = json.loads(line)
+        originals[seed["group"]] = seed["human"]
+    by_model = {}
     for line in path.open():
         g = json.loads(line)
-        key = (g["group"], g["source"])
-        rank = (zlib.crc32(g["model"].encode()), g["text"])
-        if key not in kept or rank < kept[key][0]:
-            kept[key] = (rank, g)
+        by_model[(g["group"], g["source"], g["model"])] = g
+    ranked = {}
+    for (group, source, model), g in by_model.items():
+        rank = (zlib.crc32(model.encode()), g["text"])
+        ranked.setdefault((group, source), []).append((rank, g))
     added = 0
-    for key in sorted(kept):
-        g = kept[key][1]
-        added += corpus.append(
-            g["text"],
-            split=g.get("split"),
-            label=g["label"],
-            source=g["source"],
-            domain=g["domain"],
-            model=g["model"],
-            group=g["group"],
-        )
+    for key in sorted(ranked):
+        for _, g in sorted(ranked[key], key=lambda pair: pair[0])[:PER_SEED_AND_SOURCE]:
+            count = corpus.append(
+                g["text"],
+                split=g.get("split"),
+                label=g["label"],
+                source=g["source"],
+                domain=g["domain"],
+                model=g["model"],
+                group=g["group"],
+            )
+            added += count
+            if g["source"] == "gateway-polish" and g["group"] in originals:
+                for row in corpus.rows[len(corpus.rows) - count :]:
+                    row["label"] = polish_label(originals[g["group"]], row["text"])
     return added
 
 def add_c4(corpus: Corpus) -> list[dict]:
@@ -246,14 +277,18 @@ def add_c4(corpus: Corpus) -> list[dict]:
 
     checked_sites = {urlparse(d["url"]).hostname for d in docs[:stop]}
     seeds = []
+    pages = 0
     for doc in docs[stop:]:
-        if len(seeds) >= C4_TRAIN_PAGES:
+        if pages >= C4_TRAIN_PAGES:
             break
         if urlparse(doc["url"]).hostname in checked_sites:
             continue
         text = "\n\n".join(doc["text"].split("\n"))
         before = len(corpus.rows)
         if not corpus.append(text, label="human", source="c4", domain="web", model="human", group=doc["url"]):
+            continue
+        pages += 1
+        if pages > C4_SEED_PAGES:
             continue
         gist = " ".join(corpus.rows[before]["text"].split()[:25])
         topic = f'{doc["url"]}, whose own text begins "{gist}..."'

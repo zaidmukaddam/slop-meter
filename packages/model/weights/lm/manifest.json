@@ -1,6 +1,6 @@
 {
  "spec": 5,
- "version": "2026-09-20.4-lm",
+ "version": "2026-09-21-lm",
  "classes": [
   "human",
   "machine",
@@ -199,33 +199,34 @@
  "layers": [
   {
    "inputs": 184,
-   "outputs": 224,
+   "outputs": 672,
    "weights": 1472,
-   "scales": 42688,
-   "bias": 43584
+   "scales": 125120,
+   "bias": 127808
   },
   {
-   "inputs": 224,
-   "outputs": 64,
-   "weights": 44480,
-   "scales": 58816,
-   "bias": 59072
+   "inputs": 672,
+   "outputs": 192,
+   "weights": 130496,
+   "scales": 259520,
+   "bias": 260288
   },
   {
-   "inputs": 64,
+   "inputs": 192,
    "outputs": 3,
-   "weights": 59328,
-   "scales": 59520,
-   "bias": 59532
+   "weights": 261056,
+   "scales": 261632,
+   "bias": 261644
   }
  ],
  "activation": "relu",
  "temperature": 1.0,
- "tau": 0.93,
- "tauMachine": 0.95,
+ "tau": 0.92,
+ "tauMachine": 0.97,
  "minWords": 25,
- "bytes": 59544,
- "params": 56035,
+ "bytes": 261656,
+ "params": 168105,
+ "members": 3,
  "lm": {
   "repo": "onnx-community/SmolLM2-135M-ONNX",
   "dtype": "q4f16",
