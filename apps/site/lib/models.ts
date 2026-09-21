@@ -107,7 +107,7 @@ export const SPECS: Spec[] = [
           { value: "Any browser", note: "Phones included." },
           {
             value: "Chrome, Edge, Safari",
-            note: "Recent versions. Can be too heavy for a phone.",
+            note: "Recent versions. Tested on an iPhone 15 Plus. Older phones may not fit it.",
           },
         ],
       },

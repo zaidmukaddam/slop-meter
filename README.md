@@ -76,7 +76,7 @@ A model ships only if its calls are right 96% of the time and it calls at most 0
 - Human text polished by a model is read as human about half the time.
 - Text from the newest models mostly gets can't tell.
 - English only. Other languages are left unmarked.
-- Sharper reading needs WebGPU with 16-bit floats. In Safari it holds about 600 MB while it runs and up to 1.6 GB for a few seconds as it starts. A phone that runs out reloads the page, and sharper reading stays off after that.
+- Sharper reading needs WebGPU with 16-bit floats. In Safari it holds about 600 MB while it runs and up to 1.6 GB for a few seconds as it starts. It runs on an iPhone 15 Plus. A phone that runs out of memory reloads the page, and sharper reading stays off after that.
 - Human web text comes from one 2019 crawl.
 
 ## License
