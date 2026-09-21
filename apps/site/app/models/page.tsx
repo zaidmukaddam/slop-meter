@@ -57,25 +57,6 @@ const BUILD_SHARPER = [
   },
 ]
 
-const LIMITS = [
-  {
-    title: "Rewritten machine text gets through",
-    body: "Run a model's text through a paraphraser and it catches fewer than 1 paragraph in 10.",
-  },
-  {
-    title: "A person's draft polished by a model",
-    body: "It depends on how much the model changed. A light edit still reads as human. A heavy rewrite reads as machine-ish, and by then most of the words are the model's.",
-  },
-  {
-    title: "The newest models are harder",
-    body: "Their writing is closer to a person's, so more of it gets can't tell.",
-  },
-  {
-    title: "English only",
-    body: "Anything else is left unmarked, not guessed at.",
-  },
-]
-
 export const metadata: Metadata = {
   title: "Models",
   alternates: { canonical: "/models" },
@@ -165,24 +146,6 @@ export default async function ModelsPage() {
         lead="Every verdict comes with a percentage. We grouped paragraphs by the percentage it gave, then checked how often it was right. Dots on the dashed line mean the number can be trusted."
       >
         <ReliabilityCharts reliability={REPORT.model.reliability} />
-      </Section>
-
-      <Section
-        id="limits"
-        label="Good to know"
-        title="Where it struggles"
-        lead="A mark is a guess about style. It can't tell you who wrote something."
-      >
-        <dl className="grid max-w-4xl gap-x-16 gap-y-8 sm:grid-cols-2">
-          {LIMITS.map((limit) => (
-            <div key={limit.title}>
-              <dt className="font-semibold text-pretty">{limit.title}</dt>
-              <dd className="mt-2 max-w-sm text-[15px]/relaxed text-pretty text-graphite">
-                {limit.body}
-              </dd>
-            </div>
-          ))}
-        </dl>
       </Section>
 
       <footer className="border-t border-hairline">
