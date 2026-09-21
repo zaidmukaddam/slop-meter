@@ -67,8 +67,6 @@ export function ReadingBench({ models }: { models: ModelFacts }) {
   )
 
   const example = EXAMPLES.find((e) => e.id === textId)
-  // Your own text is written in the reading view itself: there is no separate editor
-  // to switch into, so the only difference is what decides the paragraph in focus.
   const own = !example
   const shown = useRef(textId)
   const paragraphs = segment(example ? example.text : ownText)
@@ -92,8 +90,6 @@ export function ReadingBench({ models }: { models: ModelFacts }) {
     }
   }
 
-  // The language model reads a paragraph in tens of milliseconds, and every keystroke
-  // makes a paragraph it has never seen. It gets your text once you pause.
   useEffect(() => {
     const timer = setTimeout(() => setSettled(ownText), 800)
     return () => clearTimeout(timer)
@@ -107,11 +103,8 @@ export function ReadingBench({ models }: { models: ModelFacts }) {
     ])
   }, [sharper.status, example, settled])
 
-  // The number only exists once there is a reading, so that is when to measure again.
   const hasReading = score !== undefined
 
-  // The collapse itself is CSS, driven by the scroll. This only says when it is over, to
-  // hand the tab order to the pinned face (and to show it, where scroll timelines are missing).
   useEffect(() => {
     const rail = railRef.current
     if (!rail) return
@@ -122,9 +115,6 @@ export function ReadingBench({ models }: { models: ModelFacts }) {
     return () => observer.disconnect()
   }, [])
 
-  // Where each travelling piece has to end up: the offset and scale from its place on the
-  // full face to its twin on the pinned face. Measured from layout boxes, which ignore
-  // transforms, so it is right even if this runs mid-collapse. Never runs on scroll.
   useLayoutEffect(() => {
     const head = headRef.current
     if (!head) return
@@ -149,7 +139,6 @@ export function ReadingBench({ models }: { models: ModelFacts }) {
         if (!to?.offsetParent) continue
         const a = place(from)
         const b = place(to)
-        // Text scales by its type size, since a paragraph is as wide as its column.
         const s =
           from.dataset.morph === "dial"
             ? to.offsetWidth / from.offsetWidth
@@ -211,7 +200,6 @@ export function ReadingBench({ models }: { models: ModelFacts }) {
   }, [textId])
 
   useEffect(() => {
-    // A read paragraph keeps its text in a <p>. One you are writing is the element itself.
     const holder = active === undefined ? null : elements.current.get(active)
     const element = holder?.querySelector("p") ?? holder ?? null
     highlightSpans(element, reasons.flatMap(tellSpans))
@@ -245,9 +233,16 @@ export function ReadingBench({ models }: { models: ModelFacts }) {
   })
 
   const caption =
-    score && active !== undefined
-      ? `¶ ${active + 1} of ${paragraphs.length} · ${score.words} words`
-      : ""
+    score && active !== undefined ? (
+      <>
+        ¶ {active + 1}
+        <span className="max-sm:hidden"> of </span>
+        <span className="sm:hidden">/</span>
+        {paragraphs.length} · {score.words} words
+      </>
+    ) : (
+      ""
+    )
 
   return (
     <div
@@ -261,17 +256,12 @@ export function ReadingBench({ models }: { models: ModelFacts }) {
         } as React.CSSProperties
       }
     >
-      {/* As tall as the distance the header travels before it pins: the scroll
-          timeline for the collapse. See .bench-rail in globals.css. */}
       <div
         ref={railRef}
         aria-hidden
         className="bench-rail pointer-events-none absolute inset-x-0 top-0 h-39 max-lg:hidden"
       />
 
-      {/* One box. On wide screens its top is negative, so 156 of its 260px scroll out
-          of the window and the last 104 stay: a collapse with no layout change. Narrow
-          screens keep the whole panel pinned, where it is already header-sized. */}
       <div
         ref={headRef}
         className="sticky top-0 z-20 border-b border-hairline bg-bench lg:-top-39 lg:h-65"
@@ -396,8 +386,6 @@ export function ReadingBench({ models }: { models: ModelFacts }) {
                   active={active}
                 />
               </div>
-              {/* The arrow marks the paragraph the scroll has reached. Your own text
-                  is followed by the caret, so it has no use for one. */}
               {!own && (
                 <div
                   aria-hidden

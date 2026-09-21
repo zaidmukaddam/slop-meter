@@ -107,7 +107,6 @@ export const BREAKS_PAGE = `<!doctype html>
   </body>
 </html>`
 
-/** A post of a feed, shaped like x.com: the text is a div of spans inside nested flex wrappers. */
 const POST = (text: string) => `
   <div data-testid="cellInnerDiv">
     <div><div>
@@ -135,11 +134,6 @@ export const FEED_PAGE = `<!doctype html>
   </body>
 </html>`
 
-/**
- * A comment thread shaped like reddit.com: each comment is a custom element
- * holding the markdown body. Modeled on its markup, not captured from the live
- * site, which blocks automated browsers.
- */
 export const THREAD_REPLIES = [HUMAN[1], MACHINE[2], HUMAN[2]]
 
 export const COMMENTS_PAGE = `<!doctype html>

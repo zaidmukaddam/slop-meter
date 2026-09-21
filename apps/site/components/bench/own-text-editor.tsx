@@ -13,22 +13,16 @@ import { cn } from "@/lib/utils"
 const DRAFT = "slop-meter:draft"
 const SAVE_AFTER_MS = 400
 
-/** Both layers set their text with exactly this, or the caret drifts off the words.
- *  The textarea's own text is transparent: what you see is the mirror beneath it,
- *  which is an ordinary element and so can be underlined, dimmed and measured. */
 const TYPE =
   "font-serif text-[18px]/[1.7] tracking-normal whitespace-pre-wrap break-words [tab-size:4]"
 
 interface OwnTextEditorProps {
   value: string
   onChange: (text: string) => void
-  /** One per paragraph, in the order segmentSpans finds them. */
   scores: (Score | undefined)[]
   active: number | undefined
   minWords: number
-  /** Each paragraph's element, so the bench can trace and annotate it like a read one. */
   register: (index: number, element: HTMLElement | null) => void
-  /** The paragraph the caret is in, or null when it is between paragraphs. */
   onCaret: (index: number | null) => void
 }
 
@@ -53,7 +47,6 @@ export function OwnTextEditor({
   const words = value.match(/\S+/g)?.length ?? 0
   const short = scores.filter((score) => score?.tooShort).length
 
-  // A draft outlives the tab. Restored once, into an empty box only.
   useEffect(() => {
     try {
       const saved = localStorage.getItem(DRAFT)
@@ -117,7 +110,6 @@ export function OwnTextEditor({
     )
     at = end
   })
-  // The zero-width space gives a trailing empty line a box, as the textarea has.
   pieces.push(value.slice(at), "​")
 
   const status = problem
@@ -176,7 +168,6 @@ export function OwnTextEditor({
         />
       </div>
 
-      {/* Kept to the text's width: the column beside it belongs to the notes. */}
       <div className="mt-8 flex max-w-(--measure) flex-wrap items-center justify-between gap-x-4 gap-y-3 border-t border-hairline pt-4">
         <p
           aria-live="polite"
@@ -219,8 +210,6 @@ export function OwnTextEditor({
               type="button"
               variant="ghost"
               onClick={clear}
-              // Pulled left by its own padding, so the label and not the invisible
-              // pill lines up with the text above it.
               className="-ml-4 h-9 rounded-full px-4 text-graphite pointer-coarse:h-11"
             >
               Clear
@@ -259,8 +248,6 @@ function Paragraph({
       ? score.rules.filter((rule) => rule.value > RULE_FIRED).flatMap(tellSpans)
       : []
 
-  // A layout effect, because the bench measures its paragraphs in one of its own, and a
-  // child's layout effects run before its parent's.
   useLayoutEffect(() => {
     register(index, ref.current)
     return () => register(index, null)

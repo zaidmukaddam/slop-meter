@@ -1,19 +1,3 @@
-"""Build the paragraph corpus, the generation seeds, and the M0 eval set.
-
-Human:   RAID human docs (all eight domains), Reddit tldr-17 (2006-2016),
-         Yelp reviews, English Wikipedia.
-Machine: RAID generations (11 older models), WildChat (GPT-3.5/GPT-4 replies to real
-         users, 2023-24), Magpie (Llama 3.1 70B), and data/gen.jsonl from generate.ts.
-Mixed:   RAID human/machine splices and model-polished human paragraphs (gen.jsonl).
-Adversarial: anti-tell text from holdout models, held out entirely, and the RAID paraphrase
-         attacks whose source document falls in the test bucket. The other paraphrases train.
-Web (held out entirely): C4 paragraphs from all eight shards of the April 2019 crawl, as a
-         browser renders them.
-
-Writes data/corpus.jsonl rows {text, label, source, domain, model, group, split, modern},
-data/seeds.jsonl and ../eval/labeled.jsonl.
-"""
-
 import gzip
 import json
 import math
@@ -43,17 +27,12 @@ SOFT_WRAP = re.compile(r"(?<!\n)\n(?!\n)")
 MODERN_SOURCES = {"wildchat", "magpie"}
 
 def rng_for(key) -> random.Random:
-    """A generator of its own per document (or source), so adding data never re-cuts or re-draws the rest."""
     return random.Random(zlib.crc32(str(key).encode()))
 
 def target_words(rng: random.Random) -> int:
-    """A paragraph length like those on real pages (C4 blocks of 25+ words: median about 45, long tail).
-    Cuts land after the sentence that crosses the target, so the draw sits a little lower."""
     return max(MIN_WORDS, int(math.exp(rng.gauss(math.log(40), 0.65))))
 
 def paragraphs(text: str, rng: random.Random, limit: int = PER_DOC) -> list[str]:
-    """Blank-line paragraphs of 25+ words, cut at sentence ends to lengths drawn for every source alike.
-    Each source used to keep its own lengths, so length alone told human from machine."""
     out = []
     for block in re.split(r"\n\s*\n", text.strip()):
         block = re.sub(r"[ \t]+", " ", block.strip())
@@ -65,7 +44,6 @@ def paragraphs(text: str, rng: random.Random, limit: int = PER_DOC) -> list[str]
     return out[:limit]
 
 def chunk(block: str, rng: random.Random) -> list[str]:
-    """Cuts after the sentence that reaches each drawn length; text between cuts keeps its line breaks."""
     chunks, start, target = [], 0, target_words(rng)
     for end in [m.start() for m in SENTENCE_BREAK.finditer(block)] + [len(block)]:
         if len(block[start:end].split()) >= target:
@@ -77,7 +55,6 @@ def chunk(block: str, rng: random.Random) -> list[str]:
     return chunks
 
 def split_for(group: str) -> str:
-    """By source document, so versions of one document never straddle splits. crc32 is stable across runs."""
     bucket = zlib.crc32(str(group).encode()) % 100
     if bucket < 15:
         return "test"
@@ -88,8 +65,6 @@ class Corpus:
         self.rows: list[dict] = []
 
     def append(self, text: str, cut: bool = True, split: str | None = None, **fields) -> int:
-        """Every row enters here: {label, source, domain, model, group} fields. A cut text gets lengths
-        drawn from its document's own generator; cut=False keeps it whole. Returns the rows added."""
         group, source = fields["group"], fields["source"]
         texts = paragraphs(text, rng_for(group)) if cut else [text]
         for p in texts:
@@ -115,9 +90,6 @@ def add_raid(corpus: Corpus) -> tuple[pd.DataFrame, pd.DataFrame]:
 
     clean = raid[(raid.model != "human") & (raid.attack == "none") & raid.decoding.isin(["greedy", "sampling"])]
     for (domain, model), group in clean.groupby(["domain", "model"]):
-        # Per domain and model, halved when the corpus grew from four RAID domains to eight.
-        # These are 2023-era models: left at the old rate they doubled their share of the
-        # machine class and the meter got worse at the text current models write.
         sample = group.sample(min(len(group), 20 if domain == "poetry" else 80), random_state=2)
         for r in sample.itertuples():
             corpus.append(r.generation, label="machine", source="raid", domain=domain, model=model, group=r.source_id)
@@ -125,9 +97,6 @@ def add_raid(corpus: Corpus) -> tuple[pd.DataFrame, pd.DataFrame]:
     paraphrased = raid[(raid.model != "human") & (raid.attack == "paraphrase")]
     for (domain, model), group in paraphrased.groupby(["domain", "model"]):
         for r in group.sample(min(len(group), 20), random_state=3).itertuples():
-            # Paraphrase used to be held out whole, which left the model to meet its first
-            # paraphrase in the wild. Source documents in the test bucket stay held out and
-            # keep the adversarial report honest; the rest train like any other machine text.
             corpus.append(
                 r.generation,
                 split="adv" if split_for(r.source_id) == "test" else None,
@@ -140,7 +109,6 @@ def add_raid(corpus: Corpus) -> tuple[pd.DataFrame, pd.DataFrame]:
     return human, clean
 
 def add_splices(corpus: Corpus, human: pd.DataFrame, machine: pd.DataFrame) -> None:
-    """First half of a human paragraph, second half of a machine paragraph written for the same source."""
     by_source = machine.groupby("source_id")
     humans = human.set_index("id")
     spliced = 0
@@ -165,7 +133,6 @@ def add_splices(corpus: Corpus, human: pd.DataFrame, machine: pd.DataFrame) -> N
         spliced += 1
 
 def add_web_humans(corpus: Corpus) -> list[dict]:
-    """Pre-2022 human web text; each document also seeds a matched machine generation."""
     seeds = []
 
     reddit = pd.read_parquet(DATA / "human/reddit.parquet", columns=["content", "summary", "subreddit", "id"])
@@ -203,7 +170,6 @@ def raid_seeds(human: pd.DataFrame) -> list[dict]:
     return seeds
 
 def add_public_machine(corpus: Corpus) -> None:
-    """Existing public LLM output: prose replies only, no code."""
     wildchat = pq.read_table(
         DATA / "public/wildchat.parquet", columns=["conversation_hash", "conversation", "language", "model"]
     ).to_pylist()
@@ -233,8 +199,6 @@ def add_replies(corpus: Corpus, replies: list[tuple[str, str, str]], source: str
         )
 
 def add_generations(corpus: Corpus) -> int:
-    """One generation per (group, mode). Some pairs were generated by more than one model; the one kept
-    is the lowest crc32 of its model name, so the choice doesn't depend on file order."""
     path = DATA / "gen.jsonl"
     if not path.exists():
         return 0
@@ -260,11 +224,6 @@ def add_generations(corpus: Corpus) -> int:
     return added
 
 def add_c4(corpus: Corpus) -> list[dict]:
-    """Web pages from before chatbots: C4 (April 2019 crawl) keeps one line per rendered block. All eight
-    validation shards are read, a fixed sample of each, so the check isn't one crawl slice of the web. The
-    first pages of a fixed shuffle are the web check: human rows at natural length, never trained on. Pages
-    from other sites train like any human source and each seeds a machine paragraph for the same page, so
-    the register of shop pages, blogs and notices can't stand in for the label."""
     paths = sorted((DATA / "web").glob("c4-validation.*.json.gz"))
     if not paths:
         return []
@@ -302,8 +261,6 @@ def add_c4(corpus: Corpus) -> list[dict]:
     return seeds
 
 def eval_set(df: pd.DataFrame) -> pd.DataFrame:
-    """200 test paragraphs, stratified by label and source. Labels come from provenance, not annotators,
-    so they aren't biased by the tells under test."""
     test = df[df.split == "test"]
     parts = []
     for label, quota in EVAL_QUOTA.items():

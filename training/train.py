@@ -1,16 +1,3 @@
-"""M1 baseline and M2 micro-model: train, calibrate, evaluate, export int8 weights.
-
-    .venv/bin/python train.py                                 # data/X.f32 + data/meta.json from featurize.ts
-    .venv/bin/python train.py --feedback data/feedback.jsonl  # M7: add opt-in feedback behind a ship gate
-    .venv/bin/python train.py --lm                            # the sharper model, with data/lm.f32 from featurize-lm.ts
-
-Writes packages/model/weights/{model.bin,manifest.json}, packages/rules/weights.json
-and eval/report.json (with --lm: weights/lm/ and eval/report-lm.json only). Feedback
-rows are {vector, label, created_at}: feature vectors and labels, never text, so
---feedback trains the base model only. Exits non-zero only on errors or when the model
-misses its exit criteria; a failed feedback gate is a normal outcome.
-"""
-
 import argparse
 import hashlib
 import json
@@ -35,11 +22,6 @@ HIDDEN = (224, 64)
 MODERN_WEIGHTS = (1.0, 2.0, 4.0)
 ECE_TARGET = 0.05
 TAU_ACCURACY_TARGET = 0.96
-# The bar chooser buys a lower can't-tell rate with human paragraphs called machine-ish,
-# so this cap is the promise each model makes, not a loose sanity check. At 0.025 a richer
-# corpus simply bought chattiness: web false-machine tripled while val stayed "within cap".
-# Sharper reading answers three times as often, so it cannot hold the base model's cap and
-# still clear the accuracy target; its own cap is set at what it already shipped.
 FALSE_MACHINE_CAP = 0.001
 FALSE_MACHINE_CAP_LM = 0.002
 TAU_GRID = np.round(np.arange(0.34, 0.99, 0.01), 2)
@@ -69,7 +51,6 @@ class Dataset:
         return self.X.shape[1]
 
 def check_corpus(stamp: str, made_by: str) -> None:
-    """Features must come from the corpus prepare.py wrote last, or rows and labels silently misalign."""
     current = hashlib.sha256((DATA / "corpus.jsonl").read_bytes()).hexdigest()
     if stamp != current:
         raise SystemExit(f"data/corpus.jsonl changed since {made_by} ran: rerun it")
@@ -115,7 +96,6 @@ def load_dataset(feedback_path: str | None, lm: dict | None = None) -> Dataset:
     )
 
 def add_feedback(X: np.ndarray, rows: list[dict], path: str):
-    """Oldest 80% of feedback trains; the newest 20% is held out as "fresh"."""
     with open(path) as f:
         feedback = [json.loads(line) for line in f if line.strip()]
     feedback = [r for r in feedback if r["label"] in CLASSES and len(r["vector"]) == X.shape[1]]
@@ -151,7 +131,6 @@ def ece(probs: np.ndarray, labels: np.ndarray, bins: int = 10) -> float:
     return float(total)
 
 def reliability(probs: np.ndarray, labels: np.ndarray, bins: int = 10) -> dict:
-    """Per class, one-vs-rest: predicted P(class) against observed frequency."""
     out = {}
     for c, name in enumerate(CLASSES):
         p, truth = probs[:, c], labels == c
@@ -202,10 +181,6 @@ def metrics(probs: np.ndarray, labels: np.ndarray) -> dict:
     }
 
 def row_weights(d: Dataset, modern_weight: float) -> np.ndarray:
-    """Each length bucket's weight is split evenly across the classes, and within a class modern rows
-    count modern_weight times as much. The sources run to different lengths; without the evening out
-    the model learns paragraph length as a stand-in for the label. Feedback has no word count
-    and balances in a bucket of its own."""
     bucket = np.where(d.words < 0, -1, np.digitize(d.words, LENGTH_EDGES))
     raw = np.where(d.modern, modern_weight, 1.0)
     w = np.zeros(len(d.y))
@@ -229,8 +204,6 @@ def fit(
     modern_weight=1.0,
     seed=0,
 ) -> nn.Module:
-    """AdamW on length-balanced class weights (see row_weights); keeps the best val epoch. Seeds before
-    building the model, so each fit is reproducible whatever ran before it."""
     torch.manual_seed(seed)
     model = make()
     weights = row_weights(d, modern_weight)
@@ -277,8 +250,6 @@ def fit_temperature(logits: np.ndarray, labels: np.ndarray) -> float:
     return float(grid[int(np.argmin(nll))])
 
 def fit_vector_scaling(logits: np.ndarray, labels: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
-    """A scale and shift per class, fit by NLL on val. One temperature can't fix a single class
-    running hot, and the class-weighted loss leaves mixed overconfident; this can."""
     z, y = torch.tensor(logits, dtype=torch.float64), torch.tensor(labels)
     scale = torch.ones(len(CLASSES), dtype=torch.float64, requires_grad=True)
     shift = torch.zeros(len(CLASSES), dtype=torch.float64, requires_grad=True)
@@ -302,7 +273,6 @@ def make_mlp(dim: int) -> nn.Sequential:
     )
 
 def train_mlp(d: Dataset, seed: int) -> tuple[nn.Sequential, float]:
-    """Chooses the modern-row weight by val macro-F1, averaged over modern and older rows so neither is sacrificed."""
     cols = list(range(d.dim))
     val_labels, val_modern = d.y[d.idx["val"]], d.modern[d.idx["val"]]
 
@@ -315,7 +285,6 @@ def train_mlp(d: Dataset, seed: int) -> tuple[nn.Sequential, float]:
     return candidates[best], best
 
 def train_candidate(d: Dataset, seed: int, labels: dict, words: dict) -> dict:
-    """One seed of the micro-model: trained, calibrated, int8, with its own bars chosen on val."""
     cols = list(range(d.dim))
     mlp, modern_weight = train_mlp(d, seed)
     scale, shift = fit_vector_scaling(logits_of(d, mlp, cols, "val"), labels["val"])
@@ -364,8 +333,6 @@ def by_source(d: Dataset, probs_for) -> dict:
     return out
 
 def decided(probs: np.ndarray, words: np.ndarray, tau: float, tau_machine: float) -> np.ndarray:
-    """The meter's rule (packages/model): a call needs MIN_WORDS words and its class's bar,
-    tau_machine for machine calls, tau for human and mixed."""
     bar = np.where(probs.argmax(1) == MACHINE, tau_machine, tau)
     return (words >= MIN_WORDS) & (probs.max(1) >= bar)
 
@@ -377,7 +344,6 @@ def outcome(
     tau_machine: float,
     modern: np.ndarray | None = None,
 ) -> dict:
-    """What the meter says at these bars."""
     predicted = probs.argmax(1)
     called = decided(probs, words, tau, tau_machine)
     mixed_calls = called & (predicted == 2)
@@ -388,19 +354,15 @@ def outcome(
         "accuracyDecided": float((predicted[called] == labels[called]).mean()) if called.any() else None,
         "falseMachineRateOnHuman": float(caught[labels == HUMAN].mean()),
         "mixedPrecision": float((labels[mixed_calls] == 2).mean()) if mixed_calls.any() else None,
-        # What the bars are for: catching machine text, and above all the text current
-        # models write. Seed selection ranks on this, inside the false-machine cap.
         "modernMachineCaught": float(caught[modern_machine].mean()) if modern_machine.any() else 0.0,
         "decided": int(called.sum()),
     }
 
 def calls(probs: np.ndarray, words: np.ndarray, tau: float, tau_machine: float) -> dict:
-    """Share of all paragraphs given each answer at these bars; the rest are can't tell."""
     called = decided(probs, words, tau, tau_machine)
     return {c: float((called & (probs.argmax(1) == k)).mean()) for k, c in enumerate(CLASSES)}
 
 def wilson_low(p: float, n: int, z: float = 1.96) -> float:
-    """Lower end of the 95% interval around an observed rate."""
     if n == 0:
         return 0.0
     centre = p + z * z / (2 * n)
@@ -408,9 +370,6 @@ def wilson_low(p: float, n: int, z: float = 1.96) -> float:
     return float((centre - spread) / (1 + z * z / n))
 
 def choose_thresholds(probs: np.ndarray, words: np.ndarray, labels: np.ndarray) -> tuple[float, float] | None:
-    """On val: the bars that leave the fewest paragraphs unsure while the calls stay accurate, with
-    margin, and few human paragraphs are called machine-ish. Machine calls get their own bar.
-    None when no bars on the grid meet the target."""
     best = None
     for tau_machine in TAU_GRID:
         for tau in TAU_GRID:
@@ -423,14 +382,12 @@ def choose_thresholds(probs: np.ndarray, words: np.ndarray, labels: np.ndarray) 
     return (best[1], best[2]) if best else None
 
 def decision_curves(probs: np.ndarray, words: np.ndarray, labels: np.ndarray, tau: float, tau_machine: float) -> dict:
-    """Each bar swept on its own while the other stays where it ships."""
     return {
         "other": [{"tau": float(t), **outcome(probs, words, labels, t, tau_machine)} for t in TAU_GRID],
         "machine": [{"tau": float(t), **outcome(probs, words, labels, tau, t)} for t in TAU_GRID],
     }
 
 def rule_weights(d: Dataset, rule_cols: list[int]) -> dict:
-    """Per-rule weight: machine logit minus human logit per standardized unit, from an LR on rule features."""
     W = logistic_regression(d, rule_cols).weight.detach().numpy()
     fired = d.X[:, rule_cols] > RULE_FIRED
     return {
@@ -462,7 +419,6 @@ def run_quantized(layers: list[QuantLayer], z: np.ndarray) -> np.ndarray:
     return h
 
 def linear_layers(model: nn.Module) -> list[tuple[np.ndarray, np.ndarray]]:
-    """(weight, bias) per layer."""
     return [
         (m.weight.detach().numpy().astype(np.float32), m.bias.detach().numpy().astype(np.float32))
         for m in model.modules()
@@ -507,7 +463,6 @@ def read_shipped(out: Path, dim: int) -> tuple[dict, np.ndarray, np.ndarray, lis
     return manifest, f32(norm["mean"], dim), f32(norm["std"], dim), layers
 
 def retrain_gate(d: Dataset, out: Path, new_layers: list[QuantLayer]) -> dict:
-    """M7: ship only with enough fresh feedback, lower fresh ECE, and no rise in false-machine on human text."""
     manifest, mean, std, old_layers = read_shipped(out, d.dim)
     fresh = d.idx["fresh"]
     human_test = d.idx["test"][d.y[d.idx["test"]] == HUMAN]
@@ -532,9 +487,6 @@ def write_json(path: Path, data) -> None:
     path.write_text(json.dumps(data, indent=1, allow_nan=False))
 
 def next_version(previous: str, suffix: str) -> str:
-    """The training date, with a counter when the model is retrained more than once a day, and the
-    variant's suffix ("-lm" for the sharper model). Corrections record the version, so two models
-    must never share one."""
     previous = previous.removesuffix(suffix)
     if not previous.startswith(TODAY):
         return TODAY + suffix
@@ -603,9 +555,6 @@ def main() -> None:
 
     started = time.time()
     tried = [train_candidate(d, seed, labels, words) for seed in range(args.seeds)]
-    # Every candidate with bars already holds the false-machine cap, so ranking them by
-    # timidity again picked the seed that says least. Rank by what the meter is for:
-    # paragraphs from current models that it actually calls.
     chosen = max(
         (c for c in tried if c["bars"]),
         key=lambda c: (c["val"]["modernMachineCaught"], -c["val"]["falseMachineRateOnHuman"]),

@@ -94,10 +94,6 @@ test("labeled set: machine paragraphs carry more tells than human ones, and extr
     load("machine") > load("human"),
     `machine ${load("machine")} vs human ${load("human")}`
   )
-  // No claim about r-034, absence of voice, on its own. Across the whole test split it
-  // runs higher for people (0.385 against 0.344 over 10,602 paragraphs), because
-  // encyclopedias, abstracts and news are voiceless on purpose. It earns its keep beside
-  // other rules, which is a job for the model's weights and not for a mean.
   const t0 = performance.now()
   for (const r of rows) extract(r.text)
   assert.ok(

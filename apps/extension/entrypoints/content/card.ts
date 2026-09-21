@@ -166,7 +166,6 @@ export class Card {
     const height = this.body.offsetHeight
     const m = VIEWPORT_MARGIN_PX
     const pointer = this.anchor ?? { x: target.left, y: target.top }
-    // Beside the mark it belongs to: under the line first, then over it.
     const beside = clamp(target.left - CARD_GAP_PX - width, m, innerWidth)
     const y = clamp(pointer.y + BESIDE_OFFSET_Y_PX, m, innerHeight - height - m)
     const x = clamp(target.left - CARD_GAP_PX, m, innerWidth - width - m)

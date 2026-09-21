@@ -10,9 +10,7 @@ import {
 
 export type Block = {
   el: HTMLElement
-  /** Set when the block is one run of a text separated only by blank lines. */
   nodes?: Node[]
-  /** What the card returns focus to: the lamp for a run, the element otherwise. */
   focusEl?: HTMLElement
   text?: string
   score?: Score

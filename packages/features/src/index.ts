@@ -37,7 +37,6 @@ export function extract(text: string): Features {
   }
 }
 
-/** Every rule and every weight was learned on English. This is the guard that says so. */
 export const ENGLISH_MIN_SHARE = 0.1
 
 export function englishShare(text: string | Word[]): number {
@@ -53,9 +52,6 @@ export function segment(text: string): string[] {
   return segmentSpans(normal).map(([start, end]) => normal.slice(start, end))
 }
 
-/** Where each paragraph sits in the text: the same rule as `segment`, kept as offsets
- *  for anything that has to draw on the text and not just read it. Expects "\n" line
- *  ends, which is what a textarea's value always has. */
 export function segmentSpans(text: string): Span[] {
   const spans: Span[] = []
   const breaks = /\n\s*\n/g

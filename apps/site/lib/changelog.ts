@@ -52,7 +52,6 @@ export type Release = {
   blocks: Exclude<Block, { kind: "heading" }>[]
 }
 
-/** One entry per "## 1.0.0, 2026-09-20" heading, with everything under it. */
 export function toReleases(blocks: Block[]): Release[] {
   const releases: Release[] = []
   for (const block of blocks) {

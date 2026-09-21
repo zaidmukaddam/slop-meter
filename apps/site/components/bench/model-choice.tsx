@@ -13,8 +13,6 @@ import { cn } from "@/lib/utils"
 
 type Model = "standard" | "sharper"
 
-/** What each model is and does, worked out on the server from the manifests and the
- *  dated reports, so the panel never states a number the reports don't. */
 export type ModelFacts = Record<
   Model,
   { spec: string; short: string; note: string }
@@ -23,7 +21,6 @@ export type ModelFacts = Record<
 const NAME: Record<Model, string> = { standard: "Standard", sharper: "Sharper" }
 const DOWNLOAD = "125 MB"
 
-/** Loading has two halves, fetching and starting, and only the first is a download. */
 const fetching = (s: SharperState) =>
   s.status === "loading" && !s.held && s.progress < 1
 
@@ -33,8 +30,6 @@ function badge(s: SharperState): string | null {
   return fetching(s) ? `${Math.round(s.progress * 100)}%` : "starting"
 }
 
-/** What is happening right now, in the phase where people otherwise wonder
- *  whether it is downloading 125 MB all over again. It isn't. */
 function note(s: SharperState): string | null {
   if (s.status === "failed") {
     return s.error?.retry
@@ -60,9 +55,6 @@ function standing(s: SharperState): string {
 interface ModelChoiceProps {
   legend: React.ReactNode
   className?: string
-  /** "inline" is the pair of pills. "panel" is the instrument beside the dial, built
-   *  like the reading on the dial's other side so the two columns carry equal weight.
-   *  "bar" is the same instrument at the height of the pinned header. */
   variant?: "inline" | "panel" | "bar"
   facts?: ModelFacts
 }
@@ -82,8 +74,6 @@ export function ModelChoice({
   const choose = (next: Model) => (next === "sharper" ? turnOn() : turnOff())
   const said = note(sharper)
   const size = badge(sharper)
-  // The pinned bar has one row to itself: the size is on the full panel, and up here
-  // the badge earns its width only while it is counting something.
   const pinned = variant === "bar"
   const loading = sharper.status === "loading"
 

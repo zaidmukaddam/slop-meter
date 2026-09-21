@@ -7,7 +7,7 @@ import { COLOR } from "@/lib/decisions"
 import type { Bin } from "@/lib/server/calibrate"
 
 const SIZE = 240
-const PAD = 30
+const PAD = 38
 const TICKS = [0, 0.5, 1]
 
 const at = (v: number) => PAD + v * (SIZE - PAD * 2)
@@ -75,6 +75,25 @@ function Chart({ answer, bins }: { answer: ModelClass; bins: Bin[] }) {
             </text>
           </g>
         ))}
+        <text
+          x={SIZE / 2}
+          y={SIZE - 2}
+          textAnchor="middle"
+          fontSize="8"
+          fill="var(--graphite)"
+        >
+          how sure it said it was, %
+        </text>
+        <text
+          x={8}
+          y={SIZE / 2}
+          textAnchor="middle"
+          fontSize="8"
+          fill="var(--graphite)"
+          transform={`rotate(-90 8 ${SIZE / 2})`}
+        >
+          how often it was right, %
+        </text>
         <line
           x1={at(0)}
           y1={up(0)}

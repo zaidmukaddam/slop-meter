@@ -16,7 +16,6 @@ const MESSAGES: Record<string, string> = {
 const isPlainText = (file: File) =>
   file.type.startsWith("text/") || /\.(txt|md|markdown)$/i.test(file.name)
 
-/** Markdown from the converter, minus the parts that aren't prose to score. */
 function prose(markdown: string): string {
   return markdown
     .replace(/^ {0,3}(?:```|~~~)[\s\S]*?(?:```|~~~)\s*$/gm, "")
@@ -26,10 +25,6 @@ function prose(markdown: string): string {
     .trim()
 }
 
-/**
- * Reads a document in the browser. The bytes go to WebAssembly on this
- * machine, never to a server.
- */
 export async function readDocument(file: File): Promise<string> {
   if (file.size > MAX_BYTES) {
     throw new Error("That file is over 20 MB.")

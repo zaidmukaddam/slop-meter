@@ -28,8 +28,6 @@ export function SiteHeader() {
             const current = pathname.startsWith(href)
             return (
               <li key={href}>
-                {/* On a phone these three are the whole navigation, so each gets a
-                    finger-sized target; the pill beside them can't be used there. */}
                 <Link
                   href={href}
                   aria-current={current ? "page" : undefined}

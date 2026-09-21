@@ -1,12 +1,3 @@
-/**
- * The launch post, as data. It lives apart from the page for one reason: a test reads
- * every paragraph here through the shipped model, and a post about machine-sounding
- * prose has no business sounding like a machine wrote it.
- *
- * Numbers are never typed into the prose. They arrive as facts from the dated reports,
- * so the post cannot disagree with the models page. Links are written [text](/href).
- */
-
 export type PostFacts = {
   kb: string
   numbers: string
@@ -116,6 +107,5 @@ export const body = (f: PostFacts): PostBlock[] => [
   },
 ]
 
-/** A paragraph as a reader sees it, without the link syntax. */
 export const plain = (text: string) =>
   text.replace(/\[([^\]]+)\]\([^)]+\)/g, "$1")

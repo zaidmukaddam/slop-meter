@@ -15,7 +15,7 @@ export function SiteFooter({ modelVersion }: { modelVersion: string }) {
           </p>
         </div>
         <div className="flex flex-col gap-2 text-graphite sm:items-end">
-          <div className="flex gap-5">
+          <div className="flex flex-wrap gap-x-5 *:pointer-coarse:py-2.5">
             <Link href="/models" className="hover:text-ink">
               Models
             </Link>

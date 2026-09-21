@@ -51,7 +51,7 @@ export function MarginNotes({ reasons, top, className }: MarginNotesProps) {
                     <Link
                       href={`/rules#${reason.id}`}
                       aria-label={`${reason.name}, ${reason.id} in the rulebook`}
-                      className="rounded-sm underline-offset-2 transition-colors hover:text-ink hover:underline"
+                      className="relative rounded-sm underline-offset-2 transition-colors after:absolute after:-inset-x-2 after:-inset-y-3 hover:text-ink hover:underline"
                     >
                       {reason.id}
                     </Link>

@@ -1,6 +1,11 @@
 import { test } from "node:test"
 import assert from "node:assert/strict"
-import { LM_SPEC, featuresFromLogits, packBatches } from "../src/index.ts"
+import {
+  LM_SPEC,
+  featuresFromLogits,
+  featuresFromStats,
+  packBatches,
+} from "../src/index.ts"
 
 const LM_FEATURE_NAMES = LM_SPEC.features
 
@@ -66,6 +71,15 @@ test("offsets pick one paragraph out of a padded batch", () => {
   )
   const second = featuresFromLogits(logits, 3 * vocab, vocab, [0, 2, 1])
   assert.deepEqual([...second], [...alone])
+})
+
+test("a row of reduced stats reads the same wherever it sits in the batch", () => {
+  const row = [-2, 3, 1.5, 4, -0.5, 2, 0.75, 1]
+  const alone = featuresFromStats(row, 0, 2)
+  const second = featuresFromStats([...row, 0, 0, 0, 0, ...row], 3, 2)
+  assert.deepEqual([...second], [...alone])
+  assert.ok(Math.abs(alone[0] - -1.25) < 1e-6, `mean logp ${alone[0]}`)
+  assert.equal(alone[5], 0.5)
 })
 
 test("batches pack similar lengths under the budget and keep every paragraph once", () => {

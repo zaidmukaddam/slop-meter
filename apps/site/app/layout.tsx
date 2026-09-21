@@ -46,9 +46,6 @@ export const metadata: Metadata = {
 }
 
 export const viewport: Viewport = {
-  // cover: the page paints to the edges and pads itself with env(safe-area-inset-*),
-  // which is 0 without it. No interactive-widget: Safari 27 logs the key as an error on
-  // every load, and it only matters for UI pinned to the bottom, which this site lacks.
   viewportFit: "cover",
   colorScheme: "light dark",
   themeColor: [

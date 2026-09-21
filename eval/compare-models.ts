@@ -1,13 +1,3 @@
-/**
- * Judges two shipped models on the same paragraphs: the held-out test split, the
- * adversarial split and the web check, straight from training/data/corpus.jsonl.
- *
- *   node compare-models.ts <dir-a> <dir-b>
- *
- * A directory is any folder holding manifest.json and model.bin. Nothing here reads
- * eval/report.json, so two models trained on different corpora can still be compared,
- * as long as the corpus on disk is the one you want to judge them on.
- */
 import { readFileSync } from "node:fs"
 import { type Score, Scorer, isRead } from "@slop/model"
 
@@ -20,8 +10,6 @@ const rows = readFileSync(here("../training/data/corpus.jsonl"), "utf8")
   .split("\n")
   .map((line, index) => ({ ...(JSON.parse(line) as Row), index }))
 
-/** A sharper model needs the language model's numbers for the same row, which
- *  featurize-lm.ts wrote in corpus order. */
 const lmFeatures = (() => {
   try {
     const raw = readFileSync(here("../training/data/lm.f32"))
@@ -110,8 +98,6 @@ function judge({ scorer, sharp }: Loaded, dir: string) {
       machineText,
       (j) => j.score.localDecision === "machine"
     ),
-    // The machine text people actually meet. Catching more 2023-era RAID output is
-    // no consolation for catching less of this.
     "current models caught": share(
       machineText.filter((j) => j.row.source === "gateway-plain"),
       (j) => j.score.localDecision === "machine"
@@ -142,7 +128,6 @@ console.table(
   )
 )
 
-// No regression means: never worse on a call it shouldn't make, better somewhere.
 const [before, after] = table
 const worse = [
   ["human called machine", 1],

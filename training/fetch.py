@@ -1,14 +1,3 @@
-"""Download the corpus inputs that prepare.py reads.
-
-C4: all eight English validation shards of the April 2019 crawl.
-RAID: train.csv, filtered down to every domain's unattacked rows and its
-paraphrase attack. The dataset's own parquet mirror stops after four domains,
-so the 12 GB CSV is the only complete source. It is kept on disk while it is
-read, then it can be deleted.
-
-Run from training/: .venv/bin/python fetch.py [c4|raid]
-"""
-
 import csv
 import sys
 import urllib.request
@@ -26,8 +15,6 @@ BATCH = 50_000
 
 
 def get(url: str, path: Path) -> None:
-    """Resumes a part file and only accepts the download at its stated length. A dropped
-    connection on a multi-gigabyte file otherwise looks exactly like a short dataset."""
     if path.exists():
         print(f"have {path.name}")
         return

@@ -40,16 +40,11 @@ interface DialProps {
   value: number | null
   label: string
   className?: string
-  /** Header size. Type is set in viewBox units, so 12 units in a 400-wide box renders
-   *  under 6px at header width. The pinned dial doubles its numerals to stay readable
-   *  and drops the caption strip, which the readout beside it already says. */
   compact?: boolean
 }
 
 const CAPTION_H = 44
 
-/** A numeral on the baseline row: the same face and size as the ones on the arc, and
- *  free of the wide tracking its neighbouring word is set in. */
 const END_STOP = {
   fontSize: 24,
   fontWeight: 500,
@@ -141,11 +136,6 @@ export function Dial({ value, label, className, compact }: DialProps) {
           )
         })}
 
-        {/* At header width there is no room beside the ends of the arc: a 0 or a 100 set
-            there lands on the scale. So the three inner stops stay on the arc and the two
-            ends move to the baseline, where each is named and numbered at once.
-            The type is its own group because, when the bench collapses, it leaves
-            before the gauge shrinks and comes back at the pinned size after. */}
         <g {...(compact ? { "data-fade-in": "" } : { "data-fade": "" })}>
           {LABELS.filter((n) => !compact || (n > 0 && n < 100)).map((n) => {
             const p = polar(angleFor(n / 100), R + (compact ? 34 : 28))

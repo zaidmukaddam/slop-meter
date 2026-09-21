@@ -6,8 +6,6 @@ import { percent } from "@/lib/format"
 import { MODELS } from "@/lib/models"
 import type { FigureId, PostFacts } from "@/lib/posts/introducing-slop-meter"
 
-/** Figures are the site's own instruments, live, and one photograph of the extension
- *  at work. None of them is a drawing of the product. */
 export function PostFigure({
   figure,
   facts,

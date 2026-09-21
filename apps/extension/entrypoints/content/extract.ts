@@ -56,11 +56,6 @@ function isContentBlock(el: HTMLElement, root: Element, minWords: number) {
   return linkTextLength(el) <= text.length * MAX_LINK_TEXT_SHARE
 }
 
-/**
- * Text written as one element with blank lines between paragraphs, the way
- * hand-written pages do it. The deepest such element wins, so a table wrapping
- * the prose doesn't claim it too.
- */
 export function findRunContainers(
   minWords: number,
   isTracked: (el: HTMLElement) => boolean
@@ -90,7 +85,6 @@ function isRunContainer(el: HTMLElement, root: Element, minWords: number) {
   return runsIn(el, minWords).length > 1
 }
 
-/** Runs long enough to score. Nested blocks are scored on their own, so they end a run. */
 export function runsIn(el: HTMLElement, minWords: number): Node[][] {
   return splitRuns(el).filter(
     (nodes) =>
@@ -137,7 +131,6 @@ export function runRect(nodes: Node[]): DOMRect | null {
   return rect?.height ? rect : null
 }
 
-/** Where the text starts: the first line's box, which is where a lamp sits. */
 export function firstLineRect(target: Node[] | HTMLElement): DOMRect | null {
   const range = Array.isArray(target) ? rangeOver(target) : rangeIn(target)
   const line = range && [...range.getClientRects()].find((r) => r.height)

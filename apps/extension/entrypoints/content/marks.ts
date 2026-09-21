@@ -9,7 +9,6 @@ export const MARKED_SELECTOR = "[data-slop]"
 const MIN_OPACITY = 0.3
 const LAMP_PX = 7
 const LAMP_GAP_PX = 7
-/** How far left of the text a lamp reaches, so the card's hit zone can cover it. */
 export const LAMP_REACH_PX = LAMP_PX + LAMP_GAP_PX
 
 export function createPageStyle(): HTMLStyleElement {
@@ -20,15 +19,10 @@ export function createPageStyle(): HTMLStyleElement {
   return style
 }
 
-/**
- * One lamp in the margin beside each paragraph's first line, drawn in an
- * overlay in page coordinates. Nothing in the page's own styles is touched.
- */
 export class Lamps {
   private layer = document.createElement("slop-marks")
   private lamps = new Map<Block, HTMLElement>()
 
-  /** A run of text has no element to focus, so its own lamp takes the tab stop. */
   constructor(private onPick: (block: Block) => void) {}
 
   lampFor(block: Block): HTMLElement | undefined {

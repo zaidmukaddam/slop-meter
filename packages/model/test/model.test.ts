@@ -24,8 +24,6 @@ test("scores sum to one, decisions are one of four", () => {
 
 test("a paragraph dense with tells reads as machine-ish, and explain names rules that fired", () => {
   const s = scorer.score(machine)
-  // The top guess, not the call: whether it clears the bar is the bar's business, and the
-  // bar moves with the false-machine cap each retrain is held to.
   assert.equal(s.top, "machine")
   assert.ok(s.probs.machine > 0.9, `machine ${s.probs.machine}`)
   const why = explain(s)

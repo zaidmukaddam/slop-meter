@@ -72,19 +72,20 @@ export function Rulebook() {
   return (
     <div className="mx-auto w-full max-w-[1200px] px-5 pb-24 sm:px-8">
       <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-3 border-b border-hairline pb-5">
-        <div className="-mx-5 [scrollbar-width:none] overflow-x-auto overscroll-x-contain px-5 sm:mx-0 sm:px-0">
+        <div className="min-w-0">
           <ToggleGroup
             value={[tier]}
             onValueChange={(value) =>
               value[0] && setTier(value[0] as Tier | "all")
             }
             aria-label="Kind of tell"
+            className="flex-wrap gap-y-2"
           >
             {[{ id: "all" as const, name: "All" }, ...TIERS].map((t) => (
               <ToggleGroupItem
                 key={t.id}
                 value={t.id}
-                className="h-8 shrink-0 gap-1.5 rounded-full border border-hairline px-3.5 text-[13px] data-pressed:border-ink data-pressed:bg-transparent"
+                className="h-8 shrink-0 gap-1.5 rounded-full border border-hairline px-3.5 text-[13px] data-pressed:border-ink data-pressed:bg-transparent pointer-coarse:h-10"
               >
                 {t.name}
                 <span className="font-mono text-[10px] text-graphite tabular-nums">

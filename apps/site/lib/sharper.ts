@@ -9,7 +9,6 @@ import { fetchBin, loadScorer } from "./model"
 
 const REMEMBER = "slop-meter:sharper"
 const STARTING = "slop-meter:sharper-running"
-/** SmolLM2-135M in q4f16 with its tokenizer: what the first run fetches. */
 const DOWNLOAD_BYTES = 121_000_000
 const CACHE_LIMIT = 2000
 
@@ -19,8 +18,6 @@ export type SharperState = {
   msPerParagraph: number | null
   error: LmError | null
   ready: number
-  /** Whether the language model is already in this browser's cache, so turning
-   *  sharper reading on costs a load rather than a download. */
   held: boolean
 }
 
@@ -53,9 +50,6 @@ class Connection {
   constructor(onProgress: (share: number) => void) {
     this.worker.onmessage = ({ data }: MessageEvent<WorkerReply>) => {
       if (data.type === "progress") {
-        // The total only counts files whose download has begun, and the small ones
-        // finish before the 118 MB one is even announced: taken at face value that is
-        // 100%, then 6%. Measured against the known size, and never allowed to fall.
         const share = data.loaded / Math.max(data.total, DOWNLOAD_BYTES)
         this.furthest = Math.max(this.furthest, Math.min(share, 1))
         onProgress(this.furthest)
@@ -98,14 +92,6 @@ function remember(on: boolean) {
   } catch {}
 }
 
-/** Sharper reading keeps about 800 MB in the tab, and a browser that runs out kills the
- *  page. No API reports the ceiling, so no device is refused up front: this marker is
- *  how a phone that couldn't carry it finds out, once, and stays off afterwards.
- *
- *  Set for as long as the language model is running, cleared when it is turned off or
- *  the page leaves normally. Finding it on arrival means the tab went down with the
- *  model in it. Held the whole time and not just during start-up, because the memory
- *  peak comes with the first big batch, not with loading. */
 const armed = {
   set: () => localStorage.setItem(STARTING, "1"),
   clear: () => {
@@ -115,10 +101,6 @@ const armed = {
   },
 }
 
-/** How long the page being left gets to say goodbye. Measured in Safari 27: a reload
- *  hydrates the new page and reads storage before the old page's pagehide has run,
- *  and that pagehide is visible here about 380 ms after navigation starts. Reading the
- *  marker once, straight away, called every ordinary reload a crash. */
 const GOODBYE_MS = 1200
 
 let resuming = false
@@ -130,9 +112,6 @@ export function resume(): void {
   resuming = true
   try {
     if (!localStorage.getItem(STARTING)) return again()
-    // Without this the preference is a trap: the page dies, reloads, remembers that
-    // sharper reading was on, starts it, and dies again, downloading 125 MB each lap
-    // because a download the crash interrupted never reaches the cache.
     setTimeout(() => {
       try {
         if (!localStorage.getItem(STARTING)) return again()
@@ -155,23 +134,20 @@ function again() {
 }
 
 if (typeof window !== "undefined") {
-  // A page that leaves normally is not a crash. pagehide doesn't fire for one that is.
-  window.addEventListener("pagehide", armed.clear)
-  // Safari parks the page it leaves in the back-forward cache, model and all. Coming
-  // back to it, the marker pagehide removed has to go up again.
+  window.addEventListener("pagehide", () => {
+    armed.clear()
+    if (!connection) return
+    stop()
+    update({ status: "off", progress: 0, error: null })
+  })
   window.addEventListener("pageshow", (event) => {
     if (!event.persisted) return
-    if (state.status === "on" || state.status === "loading") {
-      try {
-        armed.set()
-      } catch {}
-    }
+    try {
+      again()
+    } catch {}
   })
 }
 
-/** transformers.js keeps model files in a Cache Storage bucket of its own, so the
- *  download happens once per browser. Asking it turns "42%" into a straight answer
- *  about whether anything is coming over the network at all. */
 async function held(): Promise<void> {
   try {
     const cache = await caches.open("transformers-cache")
@@ -184,9 +160,6 @@ async function held(): Promise<void> {
 export async function turnOn(): Promise<void> {
   if (state.status === "on" || state.status === "loading") return
   if (checking) return
-  // Know whether this is a download or a start before saying which. Half a second of
-  // "Downloading, 0%" on every reload is how a cached model gets a reputation for
-  // downloading itself again.
   checking = true
   await held()
   checking = false
@@ -194,8 +167,6 @@ export async function turnOn(): Promise<void> {
   remember(true)
   try {
     armed.set()
-    // Asks the browser not to evict the 125 MB it is about to keep. Safari decides
-    // from how the site is used and may say no, which costs nothing.
     void navigator.storage?.persist?.()
   } catch {}
   const lm = new Connection((progress) => update({ progress }))

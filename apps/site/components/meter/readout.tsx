@@ -15,7 +15,7 @@ interface ReadoutProps {
   score: Score | undefined
   loading: boolean
   minWords: number
-  caption: string
+  caption: React.ReactNode
 }
 
 export function Readout({ score, loading, minWords, caption }: ReadoutProps) {
@@ -27,7 +27,10 @@ export function Readout({ score, loading, minWords, caption }: ReadoutProps) {
 
   return (
     <div aria-live="polite" className="min-w-0">
-      <p data-fade className="truncate font-mono text-[11px] text-graphite">
+      <p
+        data-fade
+        className="font-mono text-[10px] text-pretty text-graphite sm:text-[11px]"
+      >
         {caption}
       </p>
       <p
@@ -80,8 +83,6 @@ export function Readout({ score, loading, minWords, caption }: ReadoutProps) {
   )
 }
 
-/** The same reading on one line, for the bar pinned to the top of the window. Not a
- *  live region: the full readout already announces, and this one only repeats it. */
 export function ReadoutLine({
   score,
   caption,

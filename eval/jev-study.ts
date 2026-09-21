@@ -5,7 +5,13 @@ import { RULE_NAMES } from "@slop/rules/names"
 import { experimental_evaluate as evaluate } from "ai"
 
 type Label = "human" | "machine" | "mixed"
-type Row = { text: string; label: Label; split: string; domain: string }
+type Row = {
+  text: string
+  label: Label
+  split: string
+  domain: string
+  index: number
+}
 type Call = { decision: Decision; top: Label; p: number }
 type Result = {
   label: Label
@@ -13,11 +19,14 @@ type Result = {
   adversarial: boolean
   web: boolean
   local: Call
+  sharper: Call
   jev: Call
   ms: number
   inputTokens: number
 }
-type System = "local" | "jev"
+type System = "local" | "sharper" | "jev"
+const SYSTEMS: System[] = ["local", "sharper", "jev"]
+const WEB_SAMPLE = 2000
 type CurvePoint = {
   threshold: number
   unsureRate: number
@@ -96,15 +105,33 @@ function seeded(seed: number): () => number {
 }
 const random = seeded(20260919)
 
+const json = (path: string) => JSON.parse(readLocal(path).toString())
+const bytes = (path: string) => {
+  const bin = readLocal(path)
+  return bin.buffer.slice(bin.byteOffset, bin.byteOffset + bin.byteLength)
+}
+
 async function loadScorer() {
-  const manifestPath = "../packages/model/weights/manifest.json"
-  const manifest = JSON.parse(readLocal(manifestPath).toString())
-  const bin = readLocal("../packages/model/weights/model.bin")
-  const weights = bin.buffer.slice(
-    bin.byteOffset,
-    bin.byteOffset + bin.byteLength
+  return Scorer.create(
+    json("../packages/model/weights/manifest.json"),
+    bytes("../packages/model/weights/model.bin"),
+    { backend: "cpu" }
   )
-  return Scorer.create(manifest, weights, { backend: "cpu" })
+}
+
+async function loadSharper() {
+  const scorer = await loadScorer()
+  scorer.useLm(
+    json("../packages/model/weights/lm/manifest.json"),
+    bytes("../packages/model/weights/lm/model.bin")
+  )
+  const width = json("../training/data/lm.json").features.length
+  const all = new Float32Array(bytes("../training/data/lm.f32"))
+  return (row: Row) =>
+    scorer.score(
+      row.text,
+      all.subarray(row.index * width, row.index * width + width)
+    )
 }
 
 function shuffled<T>(items: T[]): T[] {
@@ -121,7 +148,7 @@ function sampleRows(n: number, minWords: number): Row[] {
     .toString()
     .trim()
     .split("\n")
-    .map((line) => JSON.parse(line))
+    .map((line, index) => ({ ...JSON.parse(line), index }))
   const take = (keep: (r: Row) => boolean, share: number) =>
     shuffled(corpus.filter(keep)).slice(0, Math.round(n * share))
   const heldOut = (label: Label) => (r: Row) =>
@@ -132,7 +159,7 @@ function sampleRows(n: number, minWords: number): Row[] {
     ...take(heldOut("machine"), SAMPLE_SHARES.machine),
     ...take(heldOut("mixed"), SAMPLE_SHARES.mixed),
     ...take((r) => r.split === "adv", SAMPLE_SHARES.adversarial),
-    ...corpus.filter((r) => r.split === "web"),
+    ...shuffled(corpus.filter((r) => r.split === "web")).slice(0, WEB_SAMPLE),
   ]
   return rows.filter((r) => r.text.split(/\s+/).length >= minWords)
 }
@@ -142,8 +169,11 @@ function topClass(probs: Partial<Record<string, number>>): Label {
   return classes.reduce((a, b) => ((probs[b] ?? 0) > (probs[a] ?? 0) ? b : a))
 }
 
-async function askJev(scorer: Scorer, row: Row): Promise<Result> {
+type Readers = { scorer: Scorer; sharper: (row: Row) => Score }
+
+async function askJev({ scorer, sharper }: Readers, row: Row): Promise<Result> {
   const score = scorer.score(row.text)
+  const sharp = sharper(row)
   const siteClass = SITE_CLASS_BY_DOMAIN[row.domain] ?? "other"
   const started = Date.now()
   const { answers, usage } = await evaluate({
@@ -162,13 +192,18 @@ async function askJev(scorer: Scorer, row: Row): Promise<Result> {
     adversarial: row.split === "adv",
     web: row.split === "web",
     local: { decision: score.localDecision, top: localTop, p: score.localP },
+    sharper: {
+      decision: sharp.localDecision,
+      top: topClass(sharp.probs),
+      p: sharp.localP,
+    },
     jev: { decision: choice, top: jevTop, p: jevProbs[jevTop] ?? 0 },
     ms: Date.now() - started,
     inputTokens: usage.inputTokens ?? 0,
   }
 }
 
-async function runAll(scorer: Scorer, rows: Row[]) {
+async function runAll(scorer: Readers, rows: Row[]) {
   const results: (Result | undefined)[] = new Array(rows.length)
   const errors: string[] = []
   let next = 0
@@ -224,6 +259,11 @@ function summarize(system: System, results: Result[]) {
   }
 }
 
+const summarizeAll = (results: Result[]) =>
+  Object.fromEntries(
+    SYSTEMS.map((system) => [system, summarize(system, results)])
+  ) as Record<System, ReturnType<typeof summarize>>
+
 function accuracyAbove(system: System, threshold: number, results: Result[]) {
   const decided = results.filter((r) => r[system].p >= threshold)
   if (!decided.length) return null
@@ -269,10 +309,7 @@ function bootstrapGap(
 function compareBy(results: Result[], key: (r: Result) => string) {
   const groups = Map.groupBy(results, key)
   return Object.fromEntries(
-    [...groups].map(([name, rows]) => [
-      name,
-      { local: summarize("local", rows), jev: summarize("jev", rows) },
-    ])
+    [...groups].map(([name, rows]) => [name, summarizeAll(rows)])
   )
 }
 
@@ -284,15 +321,22 @@ const percentile = (sorted: number[], q: number) =>
 async function main() {
   const n = Number(process.argv[2] ?? 600)
   const scorer = await loadScorer()
+  const sharperScore = await loadSharper()
   const rows = sampleRows(n, scorer.manifest.minWords)
-  const { results: all, errors } = await runAll(scorer, rows)
+  const { results: all, errors } = await runAll(
+    { scorer, sharper: sharperScore },
+    rows
+  )
   const results = all.filter((r) => !r.web)
   const onWeb = all.filter((r) => r.web)
 
-  const local = summarize("local", results)
-  const jev = summarize("jev", results)
-  const web = { local: summarize("local", onWeb), jev: summarize("jev", onWeb) }
-  const curves = { local: curve("local", results), jev: curve("jev", results) }
+  const { local, sharper, jev } = summarizeAll(results)
+  const web = summarizeAll(onWeb)
+  const curves = {
+    local: curve("local", results),
+    sharper: curve("sharper", results),
+    jev: curve("jev", results),
+  }
   const atTarget = {
     local: closestTo(curves.local, TARGET_ABSTENTION),
     jev: closestTo(curves.jev, TARGET_ABSTENTION),
@@ -339,6 +383,7 @@ async function main() {
     },
     meanInputTokens: Math.round(tokens / all.length),
     local,
+    sharper,
     jev,
     web,
     adversarial: compareBy(results, (r) =>

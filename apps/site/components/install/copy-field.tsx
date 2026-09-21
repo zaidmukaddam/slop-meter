@@ -23,7 +23,7 @@ export function CopyField({ value }: { value: string }) {
         onClick={() =>
           navigator.clipboard.writeText(value).then(() => setCopied(true))
         }
-        className="size-7 rounded-full"
+        className="relative size-7 rounded-full after:absolute after:-inset-1.5"
       >
         {copied ? <CheckIcon /> : <CopyIcon />}
       </Button>

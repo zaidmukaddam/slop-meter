@@ -42,7 +42,6 @@ export const metadata: Metadata = {
 
 const LINK = /\[([^\]]+)\]\(([^)]+)\)/g
 
-/** Prose with [text](/href) links. Site links go through the router. */
 function Inline({ text }: { text: string }) {
   const parts: React.ReactNode[] = []
   let from = 0
