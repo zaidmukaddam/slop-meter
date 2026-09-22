@@ -40,7 +40,7 @@ export async function POST(request: Request) {
 
   const budget = {
     scope: "rewrite-ip",
-    key: hashedIp(request),
+    key: hashedIp(request.headers),
     period: today(),
     limit: PER_IP_PER_DAY,
   }

@@ -2,7 +2,7 @@ import { createHash } from "node:crypto"
 
 const CORS_HEADERS = {
   "access-control-allow-origin": "*",
-  "access-control-allow-methods": "POST, OPTIONS",
+  "access-control-allow-methods": "GET, POST, OPTIONS",
   "access-control-allow-headers": "content-type",
 }
 
@@ -27,12 +27,10 @@ export function isUuid(value: unknown): value is string {
   return typeof value === "string" && UUID.test(value)
 }
 
-export function hashedIp(request: Request): string {
-  const forwarded = request.headers.get("x-forwarded-for")
+export function hashedIp(headers: Headers): string {
+  const forwarded = headers.get("x-forwarded-for")
   const ip =
-    forwarded?.split(",")[0].trim() ||
-    request.headers.get("x-real-ip") ||
-    "unknown"
+    forwarded?.split(",")[0].trim() || headers.get("x-real-ip") || "unknown"
   return createHash("sha256")
     .update(`slop-meter:${ip}`)
     .digest("hex")
