@@ -3,10 +3,14 @@
   "private": true,
   "type": "module",
   "dependencies": {
+    "@ai-sdk/amazon-bedrock": "^5.0.90",
+    "@ai-sdk/openai": "^4.0.72",
+    "@ai-sdk/xai": "^5.0.5",
+    "@neondatabase/serverless": "^1.0.0",
     "@slop/features": "workspace:*",
     "@slop/lm": "workspace:*",
     "@slop/rules": "workspace:*",
     "ai": "^7.0.100",
-    "@neondatabase/serverless": "^1.0.0"
+    "workers-ai-provider": "^4.0.0"
   }
 }

@@ -1,6 +1,10 @@
 import { createHash } from "node:crypto"
 import { appendFileSync, existsSync, readFileSync } from "node:fs"
+import { createAmazonBedrock } from "@ai-sdk/amazon-bedrock"
+import { createOpenAI } from "@ai-sdk/openai"
+import { createXai } from "@ai-sdk/xai"
 import { generateText } from "ai"
+import { createWorkersAI } from "workers-ai-provider"
 
 const MODELS = [
   "openai/gpt-4.1-mini",
@@ -249,21 +253,21 @@ const env = (name: string) => {
   return value
 }
 
-async function post(url: string, key: string, body: unknown) {
-  const response = await fetch(url, {
-    method: "POST",
-    headers: {
-      authorization: `Bearer ${key}`,
-      "content-type": "application/json",
-    },
-    body: JSON.stringify(body),
-  })
-  if (!response.ok) {
-    throw new Error(
-      `${response.status} ${(await response.text()).slice(0, 120)}`
-    )
-  }
-  return response.json()
+const providers = {
+  gateway: (name: string) => name,
+  openai: (name: string) =>
+    createOpenAI({ apiKey: env("OPENAI_API_KEY") })(name),
+  xai: (name: string) => createXai({ apiKey: env("XAI_API_KEY") })(name),
+  bedrock: (name: string) =>
+    createAmazonBedrock({
+      apiKey: env("AMAZON_BEDROCK_API_KEY"),
+      region: process.env.AWS_REGION ?? "us-east-1",
+    })(name),
+  cloudflare: (name: string) =>
+    createWorkersAI({
+      accountId: env("CLOUDFLARE_ACCOUNT_ID"),
+      apiKey: env("CLOUDFLARE_API_TOKEN"),
+    })(name, { chat_template_kwargs: { enable_thinking: false } }),
 }
 
 async function complete(
@@ -272,76 +276,18 @@ async function complete(
   system: string | undefined,
   temperature: number
 ): Promise<{ text: string; tokens: number }> {
-  if (route.via === "gateway") {
-    const { text, usage } = await generateText({
-      model: route.name,
-      system,
-      prompt,
-      temperature,
-      maxOutputTokens: MAX_OUTPUT_TOKENS,
-      maxRetries: 1,
-    })
-    return { text, tokens: usage.outputTokens ?? 0 }
-  }
-  if (route.via === "bedrock") {
-    const region = process.env.AWS_REGION ?? "us-east-1"
-    const reply = await post(
-      `https://bedrock-runtime.${region}.amazonaws.com/model/${route.name}/converse`,
-      env("AMAZON_BEDROCK_API_KEY"),
-      {
-        messages: [{ role: "user", content: [{ text: prompt }] }],
-        ...(system && { system: [{ text: system }] }),
-        inferenceConfig: { maxTokens: MAX_OUTPUT_TOKENS },
-      }
-    )
-    const parts: { text?: string }[] = reply.output?.message?.content ?? []
-    return {
-      text: parts.map((part) => part.text ?? "").join(""),
-      tokens: reply.usage?.outputTokens ?? 0,
-    }
-  }
-  const messages = [
-    ...(system ? [{ role: "system", content: system }] : []),
-    { role: "user", content: prompt },
-  ]
-  const reply =
-    route.via === "openai"
-      ? await post(
-          "https://api.openai.com/v1/chat/completions",
-          env("OPENAI_API_KEY"),
-          {
-            model: route.name,
-            messages,
-            max_completion_tokens: MAX_OUTPUT_TOKENS,
-            reasoning_effort: "low",
-          }
-        )
-      : route.via === "xai"
-        ? await post(
-            "https://api.x.ai/v1/chat/completions",
-            env("XAI_API_KEY"),
-            {
-              model: route.name,
-              messages,
-              temperature,
-              max_tokens: MAX_OUTPUT_TOKENS,
-            }
-          )
-        : await post(
-            `https://api.cloudflare.com/client/v4/accounts/${env("CLOUDFLARE_ACCOUNT_ID")}/ai/v1/chat/completions`,
-            env("CLOUDFLARE_API_TOKEN"),
-            {
-              model: route.name,
-              messages,
-              temperature,
-              max_tokens: MAX_OUTPUT_TOKENS,
-              chat_template_kwargs: { thinking: false, enable_thinking: false },
-            }
-          )
-  return {
-    text: reply.choices?.[0]?.message?.content ?? "",
-    tokens: reply.usage?.completion_tokens ?? 0,
-  }
+  const { text, usage } = await generateText({
+    model: providers[route.via](route.name),
+    system,
+    prompt,
+    ...(route.via !== "bedrock" && { temperature }),
+    maxOutputTokens: MAX_OUTPUT_TOKENS,
+    maxRetries: 1,
+    ...(route.via === "openai" && {
+      providerOptions: { openai: { reasoningEffort: "low" } },
+    }),
+  })
+  return { text, tokens: usage.outputTokens ?? 0 }
 }
 
 async function write(route: Route, prompt: string, system?: string) {
