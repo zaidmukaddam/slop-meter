@@ -26,7 +26,7 @@ const MODELS = [
   "nvidia/nemotron-3-super-120b-a12b",
   "xiaomi/mimo-v2.5",
 ]
-type Via = "gateway" | "openai" | "cloudflare" | "bedrock"
+type Via = "gateway" | "openai" | "cloudflare" | "bedrock" | "xai"
 type Route = { model: string; via: Via; name: string }
 const ROUND_TWO: Route[] = [
   { model: "openai/gpt-5.6-terra", via: "openai", name: "gpt-5.6-terra" },
@@ -59,9 +59,20 @@ const ROUND_TWO: Route[] = [
     name: "@cf/google/gemma-4-26b-a4b-it",
   },
 ]
+const ROUND_THREE: Route[] = [
+  { model: "spacexai/grok-4.7", via: "xai", name: "grok-4.7" },
+  { model: "spacexai/grok-4.6", via: "xai", name: "grok-4.6" },
+  { model: "spacexai/grok-4.5", via: "xai", name: "grok-4.5" },
+  {
+    model: "spacexai/grok-4.20-non-reasoning",
+    via: "xai",
+    name: "grok-4.20-0309-non-reasoning",
+  },
+]
 const ROUNDS: Route[][] = [
   MODELS.map((model) => ({ model, via: "gateway", name: model })),
   ROUND_TWO,
+  ROUND_THREE,
 ]
 const THINKING_ALOUD =
   /^(<think|the user (wants|is asking|asked)|let me think)/i
@@ -222,8 +233,10 @@ function plannedJobs(
     .sort((a, b) => Buffer.compare(a.hash, b.hash))
     .slice(offset, offset + count)
     .map(({ seed, hash }) => {
-      const mode = only ?? modeFor(hash.readUInt32BE(8 * round))
-      const route = routes[hash.readUInt32BE(8 * round + 4) % routes.length]
+      const draw = round < 2 ? hash : sha1(`${seed.group}:${round}`)
+      const at = round < 2 ? 8 * round : 0
+      const mode = only ?? modeFor(draw.readUInt32BE(at))
+      const route = routes[draw.readUInt32BE(at + 4) % routes.length]
       const key = `${seed.group}:${mode}:${route.model}`
       return { key, seed, mode, route, prompt: promptFor(mode, seed) }
     })
@@ -303,17 +316,28 @@ async function complete(
             reasoning_effort: "low",
           }
         )
-      : await post(
-          `https://api.cloudflare.com/client/v4/accounts/${env("CLOUDFLARE_ACCOUNT_ID")}/ai/v1/chat/completions`,
-          env("CLOUDFLARE_API_TOKEN"),
-          {
-            model: route.name,
-            messages,
-            temperature,
-            max_tokens: MAX_OUTPUT_TOKENS,
-            chat_template_kwargs: { thinking: false, enable_thinking: false },
-          }
-        )
+      : route.via === "xai"
+        ? await post(
+            "https://api.x.ai/v1/chat/completions",
+            env("XAI_API_KEY"),
+            {
+              model: route.name,
+              messages,
+              temperature,
+              max_tokens: MAX_OUTPUT_TOKENS,
+            }
+          )
+        : await post(
+            `https://api.cloudflare.com/client/v4/accounts/${env("CLOUDFLARE_ACCOUNT_ID")}/ai/v1/chat/completions`,
+            env("CLOUDFLARE_API_TOKEN"),
+            {
+              model: route.name,
+              messages,
+              temperature,
+              max_tokens: MAX_OUTPUT_TOKENS,
+              chat_template_kwargs: { thinking: false, enable_thinking: false },
+            }
+          )
   return {
     text: reply.choices?.[0]?.message?.content ?? "",
     tokens: reply.usage?.completion_tokens ?? 0,
