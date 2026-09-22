@@ -34,6 +34,9 @@ export function SiteFooter({ modelVersion }: { modelVersion: string }) {
             <Link href="/privacy" className="hover:text-ink">
               Privacy
             </Link>
+            <Link href="/terms" className="hover:text-ink">
+              Terms
+            </Link>
             {SOURCE_URL && (
               <a href={SOURCE_URL} className="hover:text-ink">
                 Source
