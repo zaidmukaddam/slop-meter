@@ -9,6 +9,10 @@ Marks text paragraph by paragraph: **human-ish**, **machine-ish**, **mixed** or 
 
 [models and numbers](https://slop-meter.com/models) · [rulebook](https://slop-meter.com/rules) · [site audit](https://slop-meter.com/audit) · [blog](https://slop-meter.com/blog) · [changelog](https://slop-meter.com/changelog) · [install](https://slop-meter.com/install)
 
+## npm package and CLI
+
+`npx slop-meter post.md` marks each paragraph from the command line, and `import { score } from "slop-meter"` does it from code, in Node or the browser. The weights ship inside the package, so nothing is sent anywhere. See [packages/slop-meter](packages/slop-meter).
+
 ## Site audit API
 
 `GET https://slop-meter.com/api/audit?url=example.com` fetches the page and its stylesheets and returns the same report as [/audit](https://slop-meter.com/audit), as JSON: `url`, `found`, `total`, `partial` (true when most of the page is drawn by JavaScript) and `findings`, each with `id`, `group`, `title`, `hit` and `evidence`. Errors come back as `{ "error": "..." }` with 400 for a bad or private address, 422 when the address isn't a web page, 429 past 30 audits a day from one IP, and 502 when the site fails to answer. No key is needed.

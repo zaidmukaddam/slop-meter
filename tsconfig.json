@@ -19,6 +19,9 @@
     "packages/features",
     "packages/lm",
     "packages/model",
+    "packages/slop-meter/src",
+    "packages/slop-meter/test",
+    "packages/slop-meter/types",
     "eval",
     "training/*.ts"
   ]

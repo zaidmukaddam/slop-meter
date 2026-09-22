@@ -15,3 +15,5 @@ apps/site/public/slop-meter-chrome.zip
 .vercel
 .DS_Store
 chrome-mv3-dist
+packages/slop-meter/dist
+*.tgz
