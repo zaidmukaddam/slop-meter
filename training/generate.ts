@@ -1,5 +1,6 @@
 import { createHash } from "node:crypto"
 import { appendFileSync, existsSync, readFileSync } from "node:fs"
+import { parseArgs } from "node:util"
 import { createAmazonBedrock } from "@ai-sdk/amazon-bedrock"
 import { createOpenAI } from "@ai-sdk/openai"
 import { createXai } from "@ai-sdk/xai"
@@ -31,7 +32,27 @@ const MODELS = [
   "xiaomi/mimo-v2.5",
 ]
 type Via = "gateway" | "openai" | "cloudflare" | "bedrock" | "xai"
-type Route = { model: string; via: Via; name: string }
+type Route = { model: string; via: Via; name: string; temperature?: false }
+const DIRECT: Record<string, Omit<Route, "model">> = {
+  "openai/gpt-4.1-mini": { via: "openai", name: "gpt-4.1-mini" },
+  "openai/gpt-4.1-nano": { via: "openai", name: "gpt-4.1-nano" },
+  "openai/gpt-5.6-luna": { via: "openai", name: "gpt-5.6-luna" },
+  "openai/gpt-5-mini": { via: "openai", name: "gpt-5-mini" },
+  "openai/gpt-oss-120b": { via: "cloudflare", name: "@cf/openai/gpt-oss-120b" },
+  "meta/llama-4-scout": {
+    via: "bedrock",
+    name: "us.meta.llama4-scout-17b-instruct-v1:0",
+  },
+  "meta/llama-4-maverick": {
+    via: "bedrock",
+    name: "us.meta.llama4-maverick-17b-instruct-v1:0",
+  },
+  "mistral/mistral-large-3": {
+    via: "bedrock",
+    name: "mistral.mistral-large-3-675b-instruct",
+  },
+  "amazon/nova-2-lite": { via: "bedrock", name: "us.amazon.nova-2-lite-v1:0" },
+}
 const ROUND_TWO: Route[] = [
   { model: "openai/gpt-5.6-terra", via: "openai", name: "gpt-5.6-terra" },
   { model: "openai/gpt-5.4", via: "openai", name: "gpt-5.4" },
@@ -40,6 +61,7 @@ const ROUND_TWO: Route[] = [
     model: "anthropic/claude-sonnet-5",
     via: "bedrock",
     name: "global.anthropic.claude-sonnet-5",
+    temperature: false,
   },
   { model: "spacexai/grok-4.7", via: "gateway", name: "spacexai/grok-4.7" },
   {
@@ -74,7 +96,10 @@ const ROUND_THREE: Route[] = [
   },
 ]
 const ROUNDS: Route[][] = [
-  MODELS.map((model) => ({ model, via: "gateway", name: model })),
+  MODELS.map((model) => ({
+    model,
+    ...(DIRECT[model] ?? { via: "gateway", name: model }),
+  })),
   ROUND_TWO,
   ROUND_THREE,
 ]
@@ -223,11 +248,14 @@ function readJsonl<T>(url: URL): T[] {
   return lines.map((line) => JSON.parse(line))
 }
 
+const lab = (route: Route) => route.model.split("/")[0]
+
 function plannedJobs(
   count: number,
   offset: number,
   round: number,
-  only?: Mode
+  only?: Mode,
+  labs?: Set<string>
 ): Job[] {
   const routes = ROUNDS[round]
   const seeds = readJsonl<Seed>(new URL("data/seeds.jsonl", import.meta.url))
@@ -245,6 +273,7 @@ function plannedJobs(
       return { key, seed, mode, route, prompt: promptFor(mode, seed) }
     })
     .filter((job) => !done.has(job.key))
+    .filter((job) => !labs || labs.has(lab(job.route)))
 }
 
 const env = (name: string) => {
@@ -280,7 +309,7 @@ async function complete(
     model: providers[route.via](route.name),
     system,
     prompt,
-    ...(route.via !== "bedrock" && { temperature }),
+    ...(route.temperature !== false && { temperature }),
     maxOutputTokens: MAX_OUTPUT_TOKENS,
     maxRetries: 1,
     ...(route.via === "openai" && {
@@ -334,15 +363,28 @@ async function run(job: Job) {
 
 async function main() {
   ;(globalThis as { AI_SDK_LOG_WARNINGS?: boolean }).AI_SDK_LOG_WARNINGS = false
-  const count = Number(process.argv[2] ?? 2600)
-  const offset = Number(process.argv[3] ?? 0)
-  const round = Number(process.argv[4] ?? 0)
-  const only = process.argv[5] as Mode | undefined
+  const { values, positionals } = parseArgs({
+    allowPositionals: true,
+    options: { lab: { type: "string" } },
+  })
+  const count = Number(positionals[0] ?? 2600)
+  const offset = Number(positionals[1] ?? 0)
+  const round = Number(positionals[2] ?? 0)
+  const only = positionals[3] as Mode | undefined
   if (!ROUNDS[round]) throw new Error(`round must be below ${ROUNDS.length}`)
   if (only && !MODES.includes(only)) {
     throw new Error(`mode must be one of ${MODES.join(", ")}, not ${only}`)
   }
-  const queue = plannedJobs(count, offset, round, only)
+  const labs = values.lab ? new Set(values.lab.split(",")) : undefined
+  const known = new Set(ROUNDS[round].map(lab))
+  for (const name of labs ?? []) {
+    if (!known.has(name)) {
+      throw new Error(
+        `round ${round} has no ${name} models. It has: ${[...known].join(", ")}`
+      )
+    }
+  }
+  const queue = plannedJobs(count, offset, round, only, labs)
   let ok = 0
   let failed = 0
   let tokens = 0

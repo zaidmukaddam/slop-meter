@@ -34,7 +34,7 @@ pnpm --filter @slop/extension e2e   # the extension in real Chromium
 WXT_API_BASE=https://slop-meter.com pnpm --filter @slop/extension zip   # the Chrome Web Store zip
 ```
 
-`.env.local` at the repo root takes `AI_GATEWAY_API_KEY` (rewrite and corpus generation). The second round of `training/generate.ts` also reads `OPENAI_API_KEY`, `CLOUDFLARE_ACCOUNT_ID`, `CLOUDFLARE_API_TOKEN` and `AMAZON_BEDROCK_API_KEY`. The site also reads `DATABASE_URL`, `CRON_SECRET` and `REWRITE_MODEL`, all optional.
+`.env.local` at the repo root takes `AI_GATEWAY_API_KEY` (rewrite and corpus generation). `training/generate.ts` also reads `OPENAI_API_KEY`, `XAI_API_KEY`, `CLOUDFLARE_ACCOUNT_ID`, `CLOUDFLARE_API_TOKEN` and `AMAZON_BEDROCK_API_KEY` for the models it calls through their own providers, and `--lab openai,meta` limits a run to those labs. The site also reads `DATABASE_URL`, `CRON_SECRET` and `REWRITE_MODEL`, all optional.
 
 ## Layout
 
