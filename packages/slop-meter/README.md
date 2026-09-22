@@ -1,4 +1,4 @@
-# slop-meter
+# slop-meter-cli
 
 Marks each paragraph **human-ish**, **machine-ish**, **mixed** or **can't tell**, with calibrated odds. It's the model behind [slop-meter.com](https://slop-meter.com) and the Chrome extension: 56 KB of weights that run locally, with no network calls and no API key.
 
@@ -7,9 +7,11 @@ It says can't tell on most paragraphs. That is on purpose: it only makes a call 
 ## CLI
 
 ```bash
-npx slop-meter post.md
-cat draft.txt | npx slop-meter
+npx slop-meter-cli post.md
+cat draft.txt | npx slop-meter-cli
 ```
+
+Installed with `npm i -g slop-meter-cli`, the command is `slop-meter`.
 
 ```
 post.md
@@ -29,7 +31,7 @@ Markdown headings, code blocks and HTML comments are skipped. Paragraphs under 2
 ## Library
 
 ```js
-import { score, scoreText } from "slop-meter"
+import { score, scoreText } from "slop-meter-cli"
 
 const reading = await score("In today's fast-paced digital landscape…")
 reading.verdict // "machine"

@@ -11,7 +11,7 @@ Marks text paragraph by paragraph: **human-ish**, **machine-ish**, **mixed** or 
 
 ## npm package and CLI
 
-`npx slop-meter post.md` marks each paragraph from the command line, and `import { score } from "slop-meter"` does it from code, in Node or the browser. The weights ship inside the package, so nothing is sent anywhere. See [packages/slop-meter](packages/slop-meter).
+`npx slop-meter-cli post.md` marks each paragraph from the command line, and `import { score } from "slop-meter-cli"` does it from code, in Node or the browser. The weights ship inside the package, so nothing is sent anywhere. See [packages/slop-meter](packages/slop-meter).
 
 ## Site audit API
 
