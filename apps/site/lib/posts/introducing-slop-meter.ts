@@ -36,7 +36,7 @@ export const meta = {
 export const body = (f: PostFacts): PostBlock[] => [
   {
     kind: "p",
-    text: "I read a lot of text that a model wrote, and most days I only find out halfway through. It is the rhythm that gives it away. Three tidy points, a sentence that tells you what the next one will say, and a last line about the future. So I built Slop Meter, a small tool that notices the same things I do and says so in the margin.",
+    text: "I read a lot of text that a model wrote, and most days I only find out halfway through. It is the rhythm that gives it away: the tidy three points, the sentence that tells you what the next one is going to say, the last line about the future. So I built Slop Meter. It notices the same things I do and says so in the margin.",
   },
   {
     kind: "p",
@@ -77,7 +77,7 @@ export const body = (f: PostFacts): PostBlock[] => [
   },
   {
     kind: "p",
-    text: `Two features do leave your device, and both stay off until you turn them on. Rewrite sends one paragraph to a server, which asks a model to redo it without the tells. The You're wrong button sends the ${f.numbers} numbers and your answer. It never sends the text.`,
+    text: `Two things do leave your device, and you have to switch both on first. Rewrite sends the one paragraph you picked to a server, and a model redoes it without the tells. Hit You're wrong and it sends the ${f.numbers} numbers plus your answer. Never the text.`,
   },
 
   { kind: "h", id: "models", text: "Two models" },

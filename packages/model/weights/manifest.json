@@ -1,6 +1,6 @@
 {
  "spec": 5,
- "version": "2026-09-21",
+ "version": "2026-09-22.2",
  "classes": [
   "human",
   "machine",
@@ -213,8 +213,8 @@
  ],
  "activation": "relu",
  "temperature": 1.0,
- "tau": 0.93,
- "tauMachine": 0.97,
+ "tau": 0.95,
+ "tauMachine": 0.972,
  "minWords": 25,
  "bytes": 57688,
  "params": 54243,

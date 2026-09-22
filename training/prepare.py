@@ -19,11 +19,12 @@ PUBLIC_MACHINE_PER_SOURCE = 6000
 PER_SEED_AND_SOURCE = 2
 EVAL_QUOTA = {"human": 90, "machine": 70, "mixed": 40}
 WEB_EVAL = 24000
-C4_TRAIN_PAGES = 12000
+C4_TRAIN_PAGES = 18000
 C4_SEED_PAGES = 3000
 HUMAN_PER_SOURCE = 12000
 SEEDS_PER_SOURCE = 2500
 PER_SHARD = 6000
+MAX_FAMILY_SHARE = 0.2
 POLISH_KEPT_HUMAN = 0.8
 POLISH_KEPT_MACHINE = 0.2
 
@@ -234,24 +235,38 @@ def add_generations(corpus: Corpus) -> int:
         by_model[(g["group"], g["source"], g["model"])] = g
     ranked = {}
     for (group, source, model), g in by_model.items():
-        rank = (zlib.crc32(model.encode()), g["text"])
+        rank = (zlib.crc32(f"{group}:{model}".encode()), g["text"])
         ranked.setdefault((group, source), []).append((rank, g))
+    chosen = [
+        g
+        for key in sorted(ranked)
+        for _, g in sorted(ranked[key], key=lambda pair: pair[0])[:PER_SEED_AND_SOURCE]
+    ]
+    by_family = {}
+    for g in chosen:
+        by_family.setdefault(g["model"].split("/")[0], []).append(g)
+    cap = int(MAX_FAMILY_SHARE * len(chosen))
+    dropped = set()
+    for docs in by_family.values():
+        docs.sort(key=lambda g: zlib.crc32(f"{g['group']}:{g['source']}:{g['model']}".encode()))
+        dropped.update(id(g) for g in docs[cap:])
     added = 0
-    for key in sorted(ranked):
-        for _, g in sorted(ranked[key], key=lambda pair: pair[0])[:PER_SEED_AND_SOURCE]:
-            count = corpus.append(
-                g["text"],
-                split=g.get("split"),
-                label=g["label"],
-                source=g["source"],
-                domain=g["domain"],
-                model=g["model"],
-                group=g["group"],
-            )
-            added += count
-            if g["source"] == "gateway-polish" and g["group"] in originals:
-                for row in corpus.rows[len(corpus.rows) - count :]:
-                    row["label"] = polish_label(originals[g["group"]], row["text"])
+    for g in chosen:
+        if id(g) in dropped:
+            continue
+        count = corpus.append(
+            g["text"],
+            split=g.get("split"),
+            label=g["label"],
+            source=g["source"],
+            domain=g["domain"],
+            model=g["model"],
+            group=g["group"],
+        )
+        added += count
+        if g["source"] == "gateway-polish" and g["group"] in originals:
+            for row in corpus.rows[len(corpus.rows) - count :]:
+                row["label"] = polish_label(originals[g["group"]], row["text"])
     return added
 
 def add_c4(corpus: Corpus) -> list[dict]:

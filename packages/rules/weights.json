@@ -1,186 +1,186 @@
 {
- "date": "2026-09-21",
+ "date": "2026-09-22",
  "method": "logistic regression on rule features; weight = machine logit - human logit per standardized unit",
  "rules": {
   "r-001": {
-   "weight": 0.23271061480045319,
-   "fireRateHuman": 0.031082086467719268,
-   "fireRateMachine": 0.08484763605382631
+   "weight": 0.2165294885635376,
+   "fireRateHuman": 0.0319765988299415,
+   "fireRateMachine": 0.07743596372175186
   },
   "r-002": {
-   "weight": 0.06248269975185394,
-   "fireRateHuman": 0.01146289713703122,
-   "fireRateMachine": 0.0181599617193609
+   "weight": 0.042255908250808716,
+   "fireRateHuman": 0.011300565028251412,
+   "fireRateMachine": 0.016986578771623687
   },
   "r-003": {
-   "weight": -0.03620781749486923,
-   "fireRateHuman": 0.023881035702148376,
-   "fireRateMachine": 0.016782792385887514
+   "weight": -0.02203046716749668,
+   "fireRateHuman": 0.023642848809107123,
+   "fireRateMachine": 0.015543204291346216
   },
   "r-004": {
-   "weight": 0.0274391770362854,
-   "fireRateHuman": 0.006879575284965051,
-   "fireRateMachine": 0.015008811549548919
+   "weight": 0.0675983801484108,
+   "fireRateHuman": 0.006925346267313366,
+   "fireRateMachine": 0.013776686270708115
   },
   "r-005": {
-   "weight": 0.13381867110729218,
-   "fireRateHuman": 0.01269368897706502,
-   "fireRateMachine": 0.03505946337079701
+   "weight": 0.1349913775920868,
+   "fireRateHuman": 0.01339233628348084,
+   "fireRateMachine": 0.03242206854951636
   },
   "r-006": {
-   "weight": 0.12062669545412064,
-   "fireRateHuman": 0.00912071863547436,
-   "fireRateMachine": 0.026131204556329727
+   "weight": 0.11824050545692444,
+   "fireRateHuman": 0.00927546377318866,
+   "fireRateMachine": 0.02399879359744932
   },
   "r-007": {
-   "weight": 0.018170088529586792,
-   "fireRateHuman": 0.013336639938276707,
-   "fireRateMachine": 0.011262444125439119
+   "weight": -0.013050451874732971,
+   "fireRateHuman": 0.013058986282647466,
+   "fireRateMachine": 0.010222107326741205
   },
   "r-008": {
-   "weight": 0.3159092962741852,
-   "fireRateHuman": 9.18501373159553e-06,
-   "fireRateMachine": 0.0049251310061505784
+   "weight": 0.2964259386062622,
+   "fireRateHuman": 1.6667500041668752e-05,
+   "fireRateMachine": 0.004545552467739503
   },
   "r-009": {
-   "weight": 0.31803709268569946,
-   "fireRateHuman": 0.04204899286324433,
-   "fireRateMachine": 0.11355811537877993
+   "weight": 0.3245227634906769,
+   "fireRateHuman": 0.043668850109172125,
+   "fireRateMachine": 0.11129063530020035
   },
   "r-010": {
-   "weight": 0.0044674016535282135,
-   "fireRateHuman": 0.044565686625701505,
-   "fireRateMachine": 0.0432991375185276
+   "weight": 0.024822982028126717,
+   "fireRateHuman": 0.04446889011117223,
+   "fireRateMachine": 0.04388289278097331
   },
   "r-011": {
-   "weight": 0.3716418445110321,
-   "fireRateHuman": 2.7555041194786585e-05,
-   "fireRateMachine": 0.014612000046683706
+   "weight": 0.39376315474510193,
+   "fireRateHuman": 2.5001250062503124e-05,
+   "fireRateMachine": 0.013378142570930007
   },
   "r-012": {
-   "weight": 0.011657321825623512,
-   "fireRateHuman": 0.005097682621035518,
-   "fireRateMachine": 0.007177619831238402
+   "weight": -0.0026002153754234314,
+   "fireRateHuman": 0.004625231261563078,
+   "fireRateMachine": 0.00667829983411965
   },
   "r-013": {
-   "weight": -0.002341456711292267,
-   "fireRateHuman": 0.004050591055633628,
-   "fireRateMachine": 0.0031861629494765588
+   "weight": -0.05916643515229225,
+   "fireRateHuman": 0.004483557511208894,
+   "fireRateMachine": 0.002789805898446757
   },
   "r-014": {
-   "weight": 0.1443931758403778,
-   "fireRateHuman": 0.0064662496670432525,
-   "fireRateMachine": 0.015522332317962724
+   "weight": 0.09256059676408768,
+   "fireRateHuman": 0.006641998766604997,
+   "fireRateMachine": 0.014315258837975828
   },
   "r-015": {
-   "weight": 0.3229392170906067,
-   "fireRateHuman": 0.1224362330421684,
-   "fireRateMachine": 0.1901193935786562
+   "weight": 0.2868538498878479,
+   "fireRateHuman": 0.13243162158107905,
+   "fireRateMachine": 0.190665460264116
   },
   "r-016": {
-   "weight": 0.48101019859313965,
-   "fireRateHuman": 0.006062109062853049,
-   "fireRateMachine": 0.061062287735023285
+   "weight": 0.47681498527526855,
+   "fireRateHuman": 0.006250312515625782,
+   "fireRateMachine": 0.056830177298089146
   },
   "r-017": {
-   "weight": -0.02073664590716362,
-   "fireRateHuman": 0.5087854656342711,
-   "fireRateMachine": 0.4298168831623543
+   "weight": 0.04959290847182274,
+   "fireRateHuman": 0.4945497274863743,
+   "fireRateMachine": 0.4369439238242961
   },
   "r-018": {
-   "weight": -0.0017052211333066225,
-   "fireRateHuman": 0.42038889348139574,
-   "fireRateMachine": 0.4277277873090345
+   "weight": 0.012974733486771584,
+   "fireRateHuman": 0.41202893478007235,
+   "fireRateMachine": 0.4246752407419376
   },
   "r-019": {
-   "weight": -0.04884130507707596,
-   "fireRateHuman": 0.31298852791784926,
-   "fireRateMachine": 0.24183326914323727
+   "weight": -0.006731120869517326,
+   "fireRateHuman": 0.3103655182759138,
+   "fireRateMachine": 0.23427906676145543
   },
   "r-020": {
-   "weight": -0.007265964522957802,
-   "fireRateHuman": 0.012399768537653963,
-   "fireRateMachine": 0.009418437729771367
+   "weight": -0.003896404057741165,
+   "fireRateHuman": 0.012250612530626532,
+   "fireRateMachine": 0.00889721881126263
   },
   "r-021": {
-   "weight": 0.06412892043590546,
-   "fireRateHuman": 0.22671369393697244,
-   "fireRateMachine": 0.2566670167944633
+   "weight": 0.09308953583240509,
+   "fireRateHuman": 0.22904478557261196,
+   "fireRateMachine": 0.25529416833624163
   },
   "r-022": {
-   "weight": 0.10977854579687119,
-   "fireRateHuman": 0.999752004629247,
-   "fireRateMachine": 0.9993814408925925
+   "weight": 0.21361637115478516,
+   "fireRateHuman": 0.9997333199993333,
+   "fireRateMachine": 0.9994183416273509
   },
   "r-023": {
-   "weight": 0.23032227158546448,
-   "fireRateHuman": 0.8148301231710341,
-   "fireRateMachine": 0.8276320857112847
+   "weight": 0.17286649346351624,
+   "fireRateHuman": 0.8160824707902061,
+   "fireRateMachine": 0.8139985781684224
   },
   "r-024": {
-   "weight": 0.024148672819137573,
-   "fireRateHuman": 0.00048680572777456304,
-   "fireRateMachine": 0.0009686869040533127
+   "weight": -0.013220604509115219,
+   "fireRateHuman": 0.0004916912512292281,
+   "fireRateMachine": 0.0009586591697365303
   },
   "r-025": {
-   "weight": -0.07302657514810562,
-   "fireRateHuman": 0.03505919741350013,
-   "fireRateMachine": 0.033402191800007
+   "weight": -0.00865490734577179,
+   "fireRateHuman": 0.033385002583462504,
+   "fireRateMachine": 0.033316099011180766
   },
   "r-026": {
-   "weight": -0.019009968265891075,
-   "fireRateHuman": 0.02191544276358693,
-   "fireRateMachine": 0.020225715719570977
+   "weight": 0.003348182886838913,
+   "fireRateHuman": 0.02194276380485691,
+   "fireRateMachine": 0.019884099183523987
   },
   "r-027": {
-   "weight": 0.03642094507813454,
-   "fireRateHuman": 0.03930267375749727,
-   "fireRateMachine": 0.03899256561978456
+   "weight": -0.040420494973659515,
+   "fireRateHuman": 0.03979365634948414,
+   "fireRateMachine": 0.03851871001098688
   },
   "r-028": {
-   "weight": 0.16669811308383942,
-   "fireRateHuman": 0.005630413417468059,
-   "fireRateMachine": 0.02994759753976868
+   "weight": 0.21968647837638855,
+   "fireRateHuman": 0.005716952514292381,
+   "fireRateMachine": 0.027014799974148518
   },
   "r-029": {
-   "weight": -0.03708823025226593,
-   "fireRateHuman": 0.008826798196063303,
-   "fireRateMachine": 0.0065240479441662875
+   "weight": -0.004173684865236282,
+   "fireRateHuman": 0.008617097521542744,
+   "fireRateMachine": 0.005967384045326267
   },
   "r-030": {
-   "weight": 0.10228891670703888,
-   "fireRateHuman": 0.1842421904420747,
-   "fireRateMachine": 0.13640978957319422
+   "weight": 0.03366144746541977,
+   "fireRateHuman": 0.17533376668833442,
+   "fireRateMachine": 0.13882246493892586
   },
   "r-031": {
-   "weight": 0.0350508913397789,
-   "fireRateHuman": 0.0006980610436012602,
-   "fireRateMachine": 0.005380297141790087
+   "weight": 0.0974016785621643,
+   "fireRateHuman": 0.0007667050019167626,
+   "fireRateMachine": 0.004868696008100131
   },
   "r-032": {
-   "weight": 0.008059203624725342,
-   "fireRateHuman": 0.001442047155860498,
-   "fireRateMachine": 0.0030227699777085303
+   "weight": 0.011646885424852371,
+   "fireRateHuman": 0.0014584062536460156,
+   "fireRateMachine": 0.003026777828044551
   },
   "r-033": {
-   "weight": 0.11942918598651886,
-   "fireRateHuman": 0.00048680572777456304,
-   "fireRateMachine": 0.001237118214815074
+   "weight": -0.03132256492972374,
+   "fireRateHuman": 0.00048335750120839376,
+   "fireRateMachine": 0.0011633167452982614
   },
   "r-034": {
-   "weight": -0.06924496591091156,
-   "fireRateHuman": 0.45075454887805055,
-   "fireRateMachine": 0.430003617987232
+   "weight": -0.03199790418148041,
+   "fireRateHuman": 0.4467056686167642,
+   "fireRateMachine": 0.42560158555763805
   },
   "r-035": {
-   "weight": 0.05912354588508606,
-   "fireRateHuman": 0.000661320988674878,
-   "fireRateMachine": 0.0014238530396928212
+   "weight": -0.014873519539833069,
+   "fireRateHuman": 0.0006416987516042468,
+   "fireRateMachine": 0.0012925741614425127
   },
   "r-038": {
-   "weight": -0.02180027961730957,
-   "fireRateHuman": 6.42950961211687e-05,
-   "fireRateMachine": 0.00015172204521316947
+   "weight": 0.020291022956371307,
+   "fireRateHuman": 5.8336250145840624e-05,
+   "fireRateMachine": 0.00014002886748960556
   }
  }
 }
