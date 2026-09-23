@@ -5,7 +5,7 @@
 
 # Slop Meter
 
-Marks text paragraph by paragraph: **human-ish**, **machine-ish**, **mixed** or **can't tell**, with calibrated odds. A 56 KB model runs in the browser, on WebGPU or the CPU, and no text leaves the device. Use it on [slop-meter.com](https://slop-meter.com) or as a Chrome extension.
+Marks text paragraph by paragraph: **human-ish**, **machine-ish**, **mixed** or **can't tell**, with calibrated odds. A 56 KB model runs in the browser, on WebGPU or the CPU, and no text leaves the device. Use it on [slop-meter.com](https://slop-meter.com) or as a [Chrome extension](https://chromewebstore.google.com/detail/slop-meter/cfajcepfchcgohbgblhdcdcdoajljkbp).
 
 [models and numbers](https://slop-meter.com/models) · [rulebook](https://slop-meter.com/rules) · [site audit](https://slop-meter.com/audit) · [blog](https://slop-meter.com/blog) · [changelog](https://slop-meter.com/changelog) · [install](https://slop-meter.com/install)
 
