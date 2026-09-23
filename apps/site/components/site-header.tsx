@@ -9,7 +9,8 @@ import { cn } from "@/lib/utils"
 const LINKS = [
   { href: "/models", label: "Models" },
   { href: "/rules", label: "Rulebook" },
-  { href: "/blog", label: "Blog" },
+  { href: "/audit", label: "Audit" },
+  { href: "/blog", label: "Blog", wide: true },
 ]
 
 export function SiteHeader() {
@@ -24,10 +25,10 @@ export function SiteHeader() {
           <Wordmark />
         </Link>
         <ul className="ml-auto flex items-center gap-1 text-sm sm:gap-6">
-          {LINKS.map(({ href, label }) => {
+          {LINKS.map(({ href, label, wide }) => {
             const current = pathname.startsWith(href)
             return (
-              <li key={href}>
+              <li key={href} className={cn(wide && "max-sm:hidden")}>
                 <Link
                   href={href}
                   aria-current={current ? "page" : undefined}

@@ -1,0 +1,49 @@
+{
+  "name": "slop-meter-cli",
+  "version": "1.0.0",
+  "description": "Marks each paragraph human-ish, machine-ish, mixed or can't tell, with calibrated odds. A 56 KB model that runs locally with no network calls.",
+  "keywords": [
+    "ai-detection",
+    "ai-text-detector",
+    "slop",
+    "stylometry",
+    "llm",
+    "cli"
+  ],
+  "homepage": "https://slop-meter.com",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/zaidmukaddam/slop-meter.git",
+    "directory": "packages/slop-meter"
+  },
+  "bugs": "https://github.com/zaidmukaddam/slop-meter/issues",
+  "license": "AGPL-3.0-only",
+  "author": "Zaid Mukaddam",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./types/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "types": "./types/index.d.ts",
+  "bin": {
+    "slop-meter": "./dist/cli.js"
+  },
+  "files": [
+    "dist",
+    "types"
+  ],
+  "sideEffects": false,
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build": "rolldown -c",
+    "prepack": "pnpm build"
+  },
+  "devDependencies": {
+    "@slop/model": "workspace:*",
+    "rolldown": "1.2.9"
+  }
+}

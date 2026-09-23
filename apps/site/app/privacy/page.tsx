@@ -40,6 +40,12 @@ const SECTIONS = [
     ],
   },
   {
+    title: "Site audits fetch the address you give",
+    body: [
+      "When you audit a site, our server fetches that address and its stylesheets, runs the checks, and throws the page away. The address is a public web page, not your text, and we don't store it. To stop abuse we keep a daily count of audits against the same one-way hash of your IP address that Rewrite uses.",
+    ],
+  },
+  {
     title: "This site",
     body: [
       "slop-meter.com uses Vercel Web Analytics and Speed Insights to count visits and measure load times. They use no cookies and do not follow you across sites.",
