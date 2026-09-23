@@ -24,11 +24,11 @@ Marks text paragraph by paragraph: **human-ish**, **machine-ish**, **mixed** or 
 | Size | 56 KB | 256 KB + SmolLM2-135M, 125 MB once |
 | Features per paragraph | 176 | 184 |
 | Networks | 1 | 3, merged into one |
-| Can't tell, held out (n=26,397) | 87% | 76% |
-| Right when it calls | 97.4% | 97.4% |
-| Human text called machine-ish | 0.13% | 0.22% |
-| Human web pages called machine-ish (n=24,000) | 0.31% | 0.38% |
-| Recent-model text caught | 15% | 25% |
+| Can't tell, held out (n=29,221) | 90% | 75% |
+| Right when it calls | 97.7% | 97.3% |
+| Human text called machine-ish | 0.17% | 0.16% |
+| Human web pages called machine-ish (n=24,000) | 0.26% | 0.24% |
+| Recent-model text caught | 15% | 24% |
 
 Full reports are `eval/report.json` and `eval/report-lm.json`.
 

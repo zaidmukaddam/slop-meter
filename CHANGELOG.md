@@ -1,5 +1,17 @@
 # Changelog
 
+## 1.0.1, 2026-09-23
+
+Both models are retrained on more text, and they call fewer people machines on the open web.
+
+- It learned from 148,291 paragraphs: 71,985 by people and 68,288 by models, from 37 current models. A new round of text from Grok, generated through xAI, is capped so one lab's models can't crowd out the rest. More web pages from sites kept out of the check went into training.
+- The bars are searched in steps of 0.001 above 0.95, where they used to move in steps of 0.01. The bar for machine-ish is now 0.972.
+- On 29,221 held-out paragraphs it says can't tell on 90% and is right on 97.7% of the rest. It catches 15% of text from current models and calls 0.17% of human paragraphs machine-ish.
+- On the 24,000 paragraphs from web pages it calls 0.26% machine-ish, down from 0.31%.
+- Sharper reading says can't tell on 75% of held-out paragraphs, is right on 97.3% of its calls and catches 24% of text from current models. On the web check it calls 0.24% machine-ish, down from 0.38%.
+- The site has an audit page that counts the tells of a vibe-coded site on any page, with a JSON API, and new terms, not-found and error pages.
+- The model is on npm as slop-meter-cli, a library and a command line tool that reads files or standard input.
+
 ## 1.0.0, 2026-09-20
 
 The first release: a Chrome extension and slop-meter.com, both reading on your device.

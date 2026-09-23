@@ -1,6 +1,6 @@
 {
   "name": "slop-meter-cli",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Marks each paragraph human-ish, machine-ish, mixed or can't tell, with calibrated odds. A 56 KB model that runs locally with no network calls.",
   "keywords": [
     "ai-detection",

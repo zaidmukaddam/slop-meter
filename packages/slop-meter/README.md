@@ -2,7 +2,7 @@
 
 Marks each paragraph **human-ish**, **machine-ish**, **mixed** or **can't tell**, with calibrated odds. It's the model behind [slop-meter.com](https://slop-meter.com) and the Chrome extension: 56 KB of weights that run locally, with no network calls and no API key.
 
-It says can't tell on most paragraphs. That is on purpose: it only makes a call when it is sure, and it calls about 1 human paragraph in 1,000 machine-ish. Treat a mark as a guess about style. It can't tell you who wrote something.
+It says can't tell on most paragraphs. That is on purpose: it only makes a call when it is sure, and it calls fewer than 2 human paragraphs in 1,000 machine-ish. Treat a mark as a guess about style. It can't tell you who wrote something.
 
 ## CLI
 
